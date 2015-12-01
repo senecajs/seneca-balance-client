@@ -25,6 +25,8 @@
     "client"
   ],
   "dependencies": {
+    "jsonic": "0.2.2",
+    "lodash": "3.10.1"
   },
   "devDependencies": {
     "docco": "0.7.0",
