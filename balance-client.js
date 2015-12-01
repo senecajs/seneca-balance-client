@@ -38,7 +38,7 @@ module.exports = function (options) {
 
     targetdesc.targets.push( { action: action, id: action.id } )
 
-    console.log( 'add_target', pat, patkey, action.id, targetdesc )
+    //console.log( 'add_target', pat, patkey, action.id, targetdesc )
   }
 
 
@@ -59,7 +59,7 @@ module.exports = function (options) {
       targetdesc.targets.splice(i,1)
     }
 
-    console.log( 'remove_target', pat, patkey, action_id, targetdesc )
+    //console.log( 'remove_target', pat, patkey, action_id, targetdesc )
   }
 
 
@@ -141,14 +141,23 @@ module.exports = function (options) {
         var patkey  = args.meta$.pattern
         var targetdesc = target_map[patkey]
  
-        console.log( 'send', patkey, targetdesc )
+        //console.log( 'send', patkey, targetdesc )
 
         if( targetdesc ) {
           var targets = targetdesc.targets
           var index   = targetdesc.index
+
+          if( targetdesc.targets.length <= index ) {
+            index = targetdesc.targets.length - 1
+          }
           
-          targets[index].action.call( this, args, done )
-          targetdesc.index = ( index + 1 ) % targets.length
+          if( targets[index] ) {
+            targets[index].action.call( this, args, done )
+            targetdesc.index = ( index + 1 ) % targets.length
+          }
+          else {
+            done()
+          }
         }
         else {
           done()

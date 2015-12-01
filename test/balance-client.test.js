@@ -38,8 +38,8 @@ describe('#balance-client', function () {
               .error(done)
               .use('..')
               .client( {type:'balance', pin:'a:1'} )
-              .client( {port:44440, pin:'a:1', id:'t0'} )
-              .client( {port:44441, pin:'a:1', id:'t1'} )
+              .client( {port:44440, pin:'a:1'} )
+              .client( {port:44441, pin:'a:1'} )
               .act('a:1',function(e,o){
                 //console.log(0,e,o)
                 Assert.equal(0,o.x)
@@ -52,7 +52,13 @@ describe('#balance-client', function () {
                     //console.log(0,e,o)
                     Assert.equal(0,o.x)
 
-                    done()
+                    s0.close( function () {
+                      s1.close( function () {
+                        c0.close( function () {
+                          done()
+                        })
+                      })
+                    })
                   })
                 })
               })
@@ -89,7 +95,7 @@ describe('#balance-client', function () {
                 function () {
 
                   c0.act('a:1',function(e,o){
-                    console.log(0,e,o)
+                    //console.log(0,e,o)
                     Assert.equal(0,o.x)
 
                     c0.act( 
