@@ -9,7 +9,7 @@
     "Richard Rodger (http://richardrodger.com)"
   ],
   "scripts": {
-    "test": "lab test/*.test.js -r console -v",
+    "test": "lab -v -t 99 -L",
     "annotate": "docco balance-client.js -o doc"
   },
   "repository": {
