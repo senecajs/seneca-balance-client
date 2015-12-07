@@ -260,12 +260,10 @@ describe('#balance-client', function () {
   it('processes actions even when no upstreams are available', function (done) {
     var c0 =
       Seneca(testopts)
-      .error(done)
       .use('..')
       .client({ type: 'balance', pin: 'a:1' })
       .act('a:1', function (e, o) {
-        Assert.strictEqual(e, null)
-        Assert.strictEqual(o, undefined)
+        Assert.ok(e)
         c0.close(done)
       })
   })

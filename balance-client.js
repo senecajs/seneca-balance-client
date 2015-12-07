@@ -6,7 +6,14 @@
 'use strict'
 
 var _ = require('lodash')
+var Eraro = require('eraro')
 
+var error = Eraro({
+  package: 'seneca',
+  msgmap: {
+    // TODO: error code messages
+  }
+})
 
 module.exports = function (options) {
   var seneca = this
@@ -39,6 +46,8 @@ module.exports = function (options) {
   }, remove_client)
 
 
+  // TODO: handle duplicates
+
   function add_target ( pat, action ) {
     var patkey = make_patkey( pat )
     var targetdesc = target_map[patkey]
@@ -64,6 +73,7 @@ module.exports = function (options) {
 
     if ( i < targetdesc.targets.length ) {
       targetdesc.targets.splice(i, 1)
+      targetdesc.index = 0
     }
   }
 
@@ -131,9 +141,13 @@ module.exports = function (options) {
             targetdesc.index = ( index + 1 ) % targets.length
             return
           }
+          else {
+            targetdesc.index = 0
+            return done( error('no-current-target') )
+          }
         }
 
-        done()
+        else return done( error('no-target') )
       })
     }
 
