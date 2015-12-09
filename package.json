@@ -9,7 +9,7 @@
     "Richard Rodger (http://richardrodger.com)"
   ],
   "scripts": {
-    "test": "lab -v -t 99 -L",
+    "test": "lab -v -t 94 -L",
     "annotate": "docco balance-client.js -o doc"
   },
   "repository": {
@@ -25,7 +25,8 @@
     "client"
   ],
   "dependencies": {
-    "eraro": "^0.4.1",
+    "eraro": "0.4.1",
+    "insync": "2.1.1",
     "jsonic": "0.2.2",
     "lodash": "3.10.1"
   },

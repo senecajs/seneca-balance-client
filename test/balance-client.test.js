@@ -267,4 +267,88 @@ describe('#balance-client', function () {
         c0.close(done)
       })
   })
+
+
+  it('supports model option', function (done) {
+    var s0 =
+      Seneca(testopts)
+      .error(done)
+      .listen(44440)
+      .add('a:1', function () { this.good({ x: 0 }) })
+      .ready(function () {
+        var s1 =
+          Seneca(testopts)
+          .error(done)
+          .listen(44441)
+          .add('a:1', function () { this.good({ x: 1 }) })
+          .ready(function () {
+            var c0 =
+              Seneca(testopts)
+              .error(done)
+              .use('..', {model: 'roundrobin'})
+              .client({ type: 'balance', pin: 'a:1' })
+              .client({ port: 44440, pin: 'a:1' })
+              .client({ port: 44441, pin: 'a:1' })
+              .act('a:1', function (e, o) {
+                Assert.equal(0, o.x)
+
+                c0.act('a:1', function (e, o) {
+                  Assert.equal(1, o.x)
+
+                  c0.act('a:1', function (e, o) {
+                    Assert.equal(0, o.x)
+
+                    s0.close(function () {
+                      s1.close(function () {
+                        c0.close(function () {
+                          done()
+                        })
+                      })
+                    })
+                  })
+                })
+              })
+          })
+      })
+  })
+
+
+  it('supports publish model option', function (done) {
+    var s0 =
+      Seneca(testopts)
+      .error(done)
+      .listen(44440)
+      .add('a:1', function () { this.good({ x: 0 }) })
+      .ready(function () {
+        var s1 =
+          Seneca(testopts)
+          .error(done)
+          .listen(44441)
+          .add('a:1', function () { this.good({ x: 1 }) })
+          .ready(function () {
+            var c0 =
+              Seneca(testopts)
+              .error(done)
+              .use('..', {model: 'publish'})
+              .client({ type: 'balance', pin: 'a:1' })
+              .client({ port: 44440, pin: 'a:1' })
+              .client({ port: 44441, pin: 'a:1' })
+              .act('a:1', function (e, o) {
+                Assert.strictEqual(e, null)
+                Assert.deepStrictEqual(o, [
+                  { x: 0 },
+                  { x: 1 }
+                ])
+
+                s0.close(function () {
+                  s1.close(function () {
+                    c0.close(function () {
+                      done()
+                    })
+                  })
+                })
+              })
+          })
+      })
+  })
 })

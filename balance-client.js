@@ -7,6 +7,7 @@
 
 var _ = require('lodash')
 var Eraro = require('eraro')
+var Insync = require('insync')
 
 var error = Eraro({
   package: 'seneca',
@@ -19,9 +20,27 @@ module.exports = function (options) {
   var seneca = this
   var target_map = {}
   var tu = seneca.export('transport/utils')
+  var modelMap = {
+    publish: publishModel,
+    roundrobin: roundRobinModel
+  }
+
 
   // Merge default options with any provided by the caller
   options = seneca.util.deepextend({}, options)
+
+  var model = options.model
+
+  if (model === undefined) {
+    model = modelMap.roundrobin
+  }
+  else if (typeof model === 'string') {
+    model = modelMap[model]
+  }
+
+  if (typeof model !== 'function') {
+    throw new Error('model must be a string or function')
+  }
 
   seneca.options({
     transport: {
@@ -133,18 +152,8 @@ module.exports = function (options) {
         var targetdesc = target_map[patkey]
 
         if ( targetdesc ) {
-          var targets = targetdesc.targets
-          var index = targetdesc.index
-
-          if ( targets[index] ) {
-            targets[index].action.call( this, args, done )
-            targetdesc.index = ( index + 1 ) % targets.length
-            return
-          }
-          else {
-            targetdesc.index = 0
-            return done( error('no-current-target') )
-          }
+          model(this, args, targetdesc, done)
+          return
         }
 
         else return done( error('no-target') )
@@ -155,5 +164,30 @@ module.exports = function (options) {
       var closer = this
       closer.prior(close_args, done)
     })
+  }
+
+
+  function publishModel (seneca, args, targetdesc, callback) {
+    Insync.mapSeries(targetdesc.targets, function (target, next) {
+      if (!target) {
+        return next(error('no-current-target'))
+      }
+
+      target.action.call(seneca, args, next)
+    }, callback)
+  }
+
+
+  function roundRobinModel (seneca, args, targetdesc, callback) {
+    var targets = targetdesc.targets
+    var index = targetdesc.index
+
+    if (!targets[index]) {
+      targetdesc.index = 0
+      return callback( error('no-current-target') )
+    }
+
+    targets[index].action.call( seneca, args, callback )
+    targetdesc.index = ( index + 1 ) % targets.length
   }
 }
