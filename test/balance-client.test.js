@@ -285,7 +285,7 @@ describe('#balance-client', function () {
             var c0 =
               Seneca(testopts)
               .error(done)
-              .use('..', {model: 'roundrobin'})
+              .use('..', {model: 'actor'})
               .client({ type: 'balance', pin: 'a:1' })
               .client({ port: 44440, pin: 'a:1' })
               .client({ port: 44441, pin: 'a:1' })
@@ -314,41 +314,41 @@ describe('#balance-client', function () {
 
 
   it('supports publish model option', function (done) {
-    var s0 =
-      Seneca(testopts)
+    var t = {}
+    var s0
+    var s1
+    var c0
+
+    s0 = Seneca(testopts)
       .error(done)
       .listen(44440)
-      .add('a:1', function () { this.good({ x: 0 }) })
+      .add('a:1', function (m, d) { t.x = 1; d(); check() })
       .ready(function () {
-        var s1 =
-          Seneca(testopts)
+        s1 = Seneca(testopts)
           .error(done)
           .listen(44441)
-          .add('a:1', function () { this.good({ x: 1 }) })
+          .add('a:1', function (m, d) { t.y = 1; d(); check() })
           .ready(function () {
-            var c0 =
-              Seneca(testopts)
+            c0 = Seneca(testopts)
               .error(done)
-              .use('..', {model: 'publish'})
-              .client({ type: 'balance', pin: 'a:1' })
+              .use('..')
+              .client({ type: 'balance', pin: 'a:1', model: 'publish' })
               .client({ port: 44440, pin: 'a:1' })
               .client({ port: 44441, pin: 'a:1' })
-              .act('a:1', function (e, o) {
-                Assert.strictEqual(e, null)
-                Assert.deepStrictEqual(o, [
-                  { x: 0 },
-                  { x: 1 }
-                ])
-
-                s0.close(function () {
-                  s1.close(function () {
-                    c0.close(function () {
-                      done()
-                    })
-                  })
-                })
-              })
+              .act('a:1,z:1')
           })
       })
+
+    function check () {
+      if ( 1 === t.x && 1 === t.y ) {
+        s0.close(function () {
+          s1.close(function () {
+            c0.close(function () {
+              done()
+            })
+          })
+        })
+      }
+    }
   })
 })

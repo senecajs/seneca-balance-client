@@ -8,6 +8,7 @@
 var _ = require('lodash')
 var Eraro = require('eraro')
 var Insync = require('insync')
+var Jsonic = require('jsonic')
 
 var error = Eraro({
   package: 'seneca',
@@ -22,7 +23,7 @@ module.exports = function (options) {
   var tu = seneca.export('transport/utils')
   var modelMap = {
     publish: publishModel,
-    roundrobin: roundRobinModel
+    actor: actorModel
   }
 
 
@@ -32,7 +33,7 @@ module.exports = function (options) {
   var model = options.model
 
   if (model === undefined) {
-    model = modelMap.roundrobin
+    model = modelMap.actor
   }
   else if (typeof model === 'string') {
     model = modelMap[model]
@@ -98,9 +99,8 @@ module.exports = function (options) {
 
 
   function make_patkey ( pat ) {
-    // TODO: sort!
     if ( _.isString( pat ) ) {
-      return pat
+      pat = Jsonic(pat)
     }
 
     var keys = _.keys(seneca.util.clean(pat)).sort()
@@ -130,10 +130,8 @@ module.exports = function (options) {
       msg.config.id = this.util.pattern( msg.config )
     }
 
-    // TODO: what about array of pins?
-    var patkey = make_patkey( msg.config.pin )
+    remove_target( msg.config.pin, msg.config.id )
 
-    remove_target( patkey, msg.config.id )
     done()
   }
 
@@ -141,6 +139,9 @@ module.exports = function (options) {
   function hook_client (args, clientdone) {
     var type = args.type
     var client_options = seneca.util.clean(_.extend({}, options[type], args))
+
+    var model = client_options.model || actorModel
+    model = _.isFunction(model) ? model : ( modelMap[model] || actorModel )
 
     tu.make_client(make_send, client_options, clientdone)
 
@@ -178,7 +179,7 @@ module.exports = function (options) {
   }
 
 
-  function roundRobinModel (seneca, args, targetdesc, callback) {
+  function actorModel (seneca, args, targetdesc, callback) {
     var targets = targetdesc.targets
     var index = targetdesc.index
 
