@@ -1,6 +1,6 @@
 {
   "name": "seneca-balance-client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Seneca client-side load balancing transport.",
   "main": "balance-client.js",
   "license": "MIT",
