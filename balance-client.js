@@ -7,7 +7,6 @@
 
 var _ = require('lodash')
 var Eraro = require('eraro')
-var Insync = require('insync')
 var Jsonic = require('jsonic')
 
 var error = Eraro({
@@ -168,14 +167,21 @@ module.exports = function (options) {
   }
 
 
-  function publishModel (seneca, args, targetdesc, callback) {
-    Insync.mapSeries(targetdesc.targets, function (target, next) {
-      if (!target) {
-        return next(error('no-current-target'))
-      }
+  function publishModel (seneca, args, targetdesc, done) {
+    if ( 0 === targetdesc.targets.length ) {
+      return done(error('no-current-target'))
+    }
 
-      target.action.call(seneca, args, next)
-    }, callback)
+    var first = true
+    for ( var i = 0; i < targetdesc.targets.length; i++ ) {
+      var target = targetdesc.targets[i]
+      target.action.call(seneca, args, function () {
+        if ( first ) {
+          done.apply(seneca, arguments)
+          first = false
+        }
+      })
+    }
   }
 
 

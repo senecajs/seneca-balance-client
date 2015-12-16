@@ -26,7 +26,6 @@
   ],
   "dependencies": {
     "eraro": "0.4.1",
-    "insync": "2.1.1",
     "jsonic": "^0.2.2",
     "lodash": "3.10.1"
   },
