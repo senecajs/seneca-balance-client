@@ -76,7 +76,7 @@ require('seneca')()
 
 ```js
 require('seneca')()
-  .use('..')
+  .use('balance-client')
 
   .client( {type: 'balance'} )
   .client( {port: 47000} )
