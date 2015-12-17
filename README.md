@@ -1,5 +1,8 @@
-![Seneca](http://senecajs.org/files/assets/seneca-logo.png)
-> A [Seneca.js][] transport plugin that provides various client-side load balancing strategies
+![Seneca](http://senecajs.org/files/assets/seneca-logo.png) 
+
+> A [Seneca.js][] transport plugin that provides various client-side
+load balancing strategies, and enables dynamic reconfiguration of
+client message routing.
 
 # seneca-balance-client
 [![npm version][npm-badge]][npm-url]
@@ -53,9 +56,50 @@ npm run test
 
 ## Quick Example
 
+### _server.js_
+
 ```js
-// TODO
+require('seneca')()
+
+  .listen( {port: function () { return process.argv[2] }} )
+
+  .add('a:1', function (msg, done) {
+    done( null, {a: 1, x: msg.x} )
+  })
+
+// run twice:
+// $ node server.js 47000 --seneca.log=type:act
+// $ node server.js 47001 --seneca.log=type:act
 ```
+
+### _client.js_
+
+```js
+require('seneca')()
+  .use('..')
+
+  .client( {type: 'balance'} )
+  .client( {port: 47000} )
+  .client( {port: 47001} )
+
+  .ready( function () {
+
+    for ( var i = 0; i < 4; i++ ) {
+      this.act( 'a:1,x:1', console.log )
+    }
+
+  })
+
+
+// $ node client.js --seneca.log=type:act
+```
+
+The client will balance requests over both servers using
+round-robin. As there is no _pin_ in the `.client` configuration, this
+will apply to all non-local actions. Add a _pin_ to restrict the
+action patterns to which this applies.
+
+<!--
 
 ## Usage
 
@@ -65,6 +109,8 @@ TODO
 ## Releases
 
 TODO
+
+-->
 
 ## Contributing
 
