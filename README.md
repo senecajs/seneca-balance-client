@@ -7,16 +7,14 @@ client message routing.
 # seneca-balance-client
 [![npm version][npm-badge]][npm-url]
 [![Build Status][travis-badge]][travis-url]
+[![Coverage Status][coveralls-badge]][coveralls-url]
+[![Dependency Status][david-badge]][david-url]
 [![Gitter][gitter-badge]][gitter-url]
 
 This module is a plugin for the Seneca framework. It provides a
 transport client that load balances outbound messages on a per-pattern basis.
 
-- __Tested on:__ Seneca 0.8
-- __Node:__ 0.10, 0.12, 4, 5
-- __License:__ [MIT][]
-
-seneca-balance-client's source can be read in an annotated fashion by,
+*seneca-balance-client*'s source can be read in an annotated fashion by,
 
 - running `npm run annotate`
 - viewing [online](http://senecajs.org/annotations/balance-client.html).
@@ -123,8 +121,12 @@ Copyright (c) 2015, Richard Rodger and other contributors.
 Licensed under [MIT][].
 
 [MIT]: ./LICENSE
-[npm-badge]: https://badge.fury.io/js/seneca-balance-client.svg
-[npm-url]: https://badge.fury.io/js/seneca-balance-client
+[npm-badge]: https://img.shields.io/npm/v/seneca-balance-client.svg
+[npm-url]: https://npmjs.com/package/seneca-balance-client
+[coveralls-badge]:https://coveralls.io/repos/rjrodger/seneca-balance-client/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/rjrodger/seneca-balance-client?branch=master
+[david-badge]: https://david-dm.org/rjrodger/seneca-balance-client.svg
+[david-url]: https://david-dm.org/rjrodger/seneca-balance-client
 [Senecajs org]: https://github.com/senecajs/
 [Seneca.js]: https://www.npmjs.com/package/seneca
 [@senecajs]: http://twitter.com/senecajs
