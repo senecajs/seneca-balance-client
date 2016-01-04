@@ -35,6 +35,7 @@
     "lodash": "3.10.1"
   },
   "devDependencies": {
+    "code": "^1.5.0",
     "coveralls": "^2.11.6",
     "docco": "0.7.0",
     "eslint-config-seneca": "1.1.1",
