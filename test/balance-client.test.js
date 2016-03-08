@@ -266,7 +266,7 @@ describe('#balance-client', function () {
   })
 
 
-  it('supports model option', function (done) {
+  it('supports model option', { parallel: false }, function (done) {
     var s0 =
       Seneca(testopts)
       .error(done)
@@ -310,7 +310,7 @@ describe('#balance-client', function () {
   })
 
 
-  it('supports publish model option', function (done) {
+  it('supports publish model option', { parallel: false }, function (done) {
     var t = {}
     var s0
     var s1
@@ -320,21 +320,26 @@ describe('#balance-client', function () {
       .error(done)
       .listen(44440)
       .add('a:1', function (m, d) { t.x = 1; d(); check() })
-      .ready(function () {
-        s1 = Seneca(testopts)
-          .error(done)
-          .listen(44441)
-          .add('a:1', function (m, d) { t.y = 1; d(); check() })
-          .ready(function () {
-            c0 = Seneca(testopts)
-              .error(done)
-              .use('..')
-              .client({ type: 'balance', pin: 'a:1', model: 'publish' })
-              .client({ port: 44440, pin: 'a:1' })
-              .client({ port: 44441, pin: 'a:1' })
-              .act('a:1,z:1')
-          })
+
+    s1 = Seneca(testopts)
+      .error(done)
+      .listen(44441)
+      .add('a:1', function (m, d) { t.y = 1; d(); check() })
+
+    c0 = Seneca({tag: 'c0', log: 'silent', debug: {short_logs: true}})
+      .error(done)
+      .use('..')
+      .client({ type: 'balance', pin: 'a:1', model: 'publish' })
+      .client({ port: 44440, pin: 'a:1' })
+      .client({ port: 44441, pin: 'a:1' })
+
+    s0.ready(function () {
+      s1.ready(function () {
+        c0.ready(function () {
+          c0.act('a:1,z:1')
+        })
       })
+    })
 
     function check () {
       if ( 1 === t.x && 1 === t.y ) {
@@ -410,5 +415,34 @@ describe('#balance-client', function () {
 
           })
       })
+  })
+
+  it('fire-and-forget', { parallel: false }, function (done) {
+    var t = {}
+    var s0, s1, c0
+
+    s0 = Seneca({tag: 's0', log: 'silent', debug: {short_logs: true}})
+      .error(done).listen(44440)
+      .add('a:1', function (m, d) { t.x = 1; d() })
+
+    s1 = Seneca({tag: 's1', log: 'silent', debug: {short_logs: true}})
+      .error(done).listen(44441)
+      .add('a:1', function (m, d) { t.y = 1; d() })
+
+    c0 = Seneca({tag: 'c0', log: 'silent', debug: {short_logs: true}})
+      .error(done).use('..')
+      .client({ type: 'balance', pin: 'a:1', model: 'publish' })
+      .client({ port: 44440, pin: 'a:1' })
+      .client({ port: 44441, pin: 'a:1' })
+
+    s0.ready( s1.ready.bind(s1, c0.ready.bind(c0, function () {
+      c0.act('a:1')
+
+      setTimeout(function () {
+        expect(t.x).to.equal(1)
+        expect(t.y).to.equal(1)
+        done()
+      }, 111)
+    })))
   })
 })
