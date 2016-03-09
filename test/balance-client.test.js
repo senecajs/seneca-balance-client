@@ -61,68 +61,64 @@ describe('#balance-client', function () {
 
   it('add-remove', { parallel: false }, function (done) {
     var s0 =
-      Seneca(testopts)
-      .error(done)
-      .listen(44440)
-      .add('a:1', function () { this.good({ x: 0 }) })
-      .ready(function () {
-        var s1 =
+          Seneca(testopts)
+          .error(done)
+          .listen(44440)
+          .add('a:1', function () { this.good({ x: 0 }) })
+
+    var s1 =
           Seneca(testopts)
           .error(done)
           .listen(44441)
           .add('a:1', function () { this.good({ x: 1 }) })
-          .ready(function () {
-            var c0 =
-              Seneca(testopts)
-              .error(done)
-              .use('..')
-              .client({ type: 'balance', pin: 'a:1' })
-              .act(
+
+    var c0 =
+          Seneca(testopts)
+          .error(done)
+          .use('..')
+          .client({ type: 'balance', pin: 'a:1' })
+
+    s0.ready(function () {
+      s1.ready(function () {
+        c0.act(
+          'role:transport,type:balance,add:client',
+          { config: { port: 44440, pin: 'a:1' } },
+          function () {
+            c0.act('a:1', function (e, o) {
+              expect(o.x).to.equal(0)
+
+              c0.act(
                 'role:transport,type:balance,add:client',
-                { config: { port: 44440, pin: 'a:1' } },
+                { config: { port: 44441, pin: 'a:1' } },
                 function () {
                   c0.act('a:1', function (e, o) {
                     expect(o.x).to.equal(0)
 
-                    c0.act(
-                      'role:transport,type:balance,add:client',
-                      { config: { port: 44441, pin: 'a:1' } },
-                      function () {
-                        c0.act('a:1', function (e, o) {
-                          expect(o.x).to.equal(0)
+                    c0.act('a:1', function (e, o) {
+                      expect(o.x).to.equal(1)
 
+                      c0.act(
+                        'role:transport,type:balance,remove:client',
+                        { config: { port: 44441, pin: 'a:1' } },
+                        function () {
                           c0.act('a:1', function (e, o) {
-                            expect(o.x).to.equal(1)
+                            expect(o.x).to.equal(0)
 
-                            c0.act(
-                              'role:transport,type:balance,remove:client',
-                              { config: { port: 44441, pin: 'a:1' } },
-                              function () {
-                                c0.act('a:1', function (e, o) {
-                                  expect(o.x).to.equal(0)
+                            c0.act('a:1', function (e, o) {
+                              expect(o.x).to.equal(0)
 
-                                  c0.act('a:1', function (e, o) {
-                                    expect(o.x).to.equal(0)
-
-                                    s0.close(function () {
-                                      s1.close(function () {
-                                        c0.close(function () {
-                                          done()
-                                        })
-                                      })
-                                    })
-                                  })
-                                })
-                              })
+                              s0.close(s1.close.bind(s1, c0.close.bind(c0, done)))
+                            })
                           })
                         })
-                      })
+                    })
                   })
                 })
+            })
           })
       })
+    })
   })
-
 
   it('doesn\'t remove when no match is found', { parallel: false }, function (done) {
     var s0 =
@@ -441,8 +437,89 @@ describe('#balance-client', function () {
       setTimeout(function () {
         expect(t.x).to.equal(1)
         expect(t.y).to.equal(1)
-        done()
+
+        s0.close( s1.close.bind(s1, c0.close.bind(c0, done)))
       }, 111)
     })))
+  })
+
+  it('multiple-clients', { parallel: false }, function (done) {
+    var t = {x: 0, y: 0}
+    var s0, s1, c0, c1, c2
+
+    s0 = Seneca({tag: 's0', log: 'silent', debug: {short_logs: true}})
+      .error(done).listen(44450)
+      .add('a:1', function (m, d) { t.x++; d(null, {x: t.x}) })
+
+    s1 = Seneca({tag: 's1', log: 'silent', debug: {short_logs: true}})
+      .error(done).listen(44451)
+      .add('a:1', function (m, d) { t.y++; d(null, {y: t.y}) })
+
+    c0 = Seneca({tag: 'c0', log: 'silent', debug: {short_logs: true}})
+      .error(done).use('..')
+      .client({ type: 'balance', pin: 'a:1' })
+      .client({ port: 44450, pin: 'a:1' })
+      .client({ port: 44451, pin: 'a:1' })
+
+    c1 = Seneca({tag: 'c1', log: 'silent', debug: {short_logs: true}})
+      .error(done).use('..')
+      .client({ type: 'balance', pin: 'a:1' })
+      .client({ port: 44450, pin: 'a:1' })
+      .client({ port: 44451, pin: 'a:1' })
+
+    c2 = Seneca({tag: 'c2', log: 'silent', debug: {short_logs: true}})
+      .error(done).use('..')
+      .client({ type: 'balance', pin: 'a:1' })
+      .client({ port: 44450, pin: 'a:1' })
+      .client({ port: 44451, pin: 'a:1' })
+
+    s0.ready(
+      s1.ready.bind(
+        s1, c0.ready.bind(
+          c0, c1.ready.bind(
+            c1, c2.ready.bind(
+              c2, setTimeout.bind(null, do_maps, 111))))))
+
+    function do_maps () {
+      c0.act(
+        'role:transport,type:balance,get:target-map,pg:"a:1"',
+        function (err, c0map) {
+          if (err) return done(err)
+
+          c1.act(
+            'role:transport,type:balance,get:target-map,pg:"a:1"',
+            function (err, c1map) {
+              if (err) return done(err)
+
+              c2.act(
+                'role:transport,type:balance,get:target-map,pg:"a:1"',
+                function (err, c2map) {
+                  if (err) return done(err)
+
+                  expect(c0map['a:1'].targets.length).to.equal(2)
+                  expect(c1map['a:1'].targets.length).to.equal(2)
+                  expect(c2map['a:1'].targets.length).to.equal(2)
+
+                  do_test()
+                })
+            })
+        })
+    }
+
+    function do_test () {
+      c0.act('a:1', function (e, o) {
+        expect(o.x).to.equal(1)
+        expect(t.x).to.equal(1)
+        expect(t.y).to.equal(0)
+
+        c0.act('a:1', function (e, o) {
+          expect(o.y).to.equal(1)
+          expect(t.x).to.equal(1)
+          expect(t.y).to.equal(1)
+
+          done()
+        })
+      })
+    }
   })
 })

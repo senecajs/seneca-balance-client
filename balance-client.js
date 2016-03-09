@@ -19,18 +19,28 @@ var error = Eraro({
 
 module.exports = balance_client
 
-var target_map
+var global_target_map = {}
 
-balance_client.preload = function () {
+var preload = balance_client.preload = function () {
   var seneca = this
-
-  target_map = {}
 
   seneca.options({
     transport: {
       balance: {
-        handle: function ( pat, action ) {
-          add_target( seneca, target_map, pat, action )
+        makehandle: function (config) {
+          var instance_map =
+                (global_target_map[seneca.id] =
+                 global_target_map[seneca.id] || {id: seneca.id})
+
+          var target_map =
+                (instance_map[config.pg] =
+                 instance_map[config.pg] || {pg: config.pg, id: Math.random()})
+
+          target_map.pg = config.pg
+
+          return function ( pat, action ) {
+            add_target( seneca, target_map, pat, action )
+          }
         }
       }
     }
@@ -50,16 +60,7 @@ function balance_client (options) {
 
   // fix for Seneca 1.0.0
   if ('1.0.0' === seneca.version) {
-    target_map = {}
-    seneca.options({
-      transport: {
-        balance: {
-          handle: function ( pat, action ) {
-            add_target( seneca, target_map, pat, action )
-          }
-        }
-      }
-    })
+    preload.call(seneca)
   }
 
   var model = options.model
@@ -87,8 +88,13 @@ function balance_client (options) {
     role: 'transport', type: 'balance', remove: 'client'
   }, remove_client)
 
+  seneca.add({
+    role: 'transport', type: 'balance', get: 'target-map'
+  }, get_client_map)
 
-  function remove_target ( pat, action_id ) {
+
+  function remove_target ( target_map, pat, config ) {
+    var action_id = config.id || seneca.util.pattern(config)
     var patkey = make_patkey( seneca, pat )
     var targetdesc = target_map[patkey]
 
@@ -109,8 +115,8 @@ function balance_client (options) {
 
 
   function add_client (msg, done) {
-    if ( !msg.config.id ) {
-      msg.config.id = this.util.pattern( msg.config )
+    if ( !msg.config.pg ) {
+      msg.config.pg = this.util.pincanon( msg.config.pin || msg.config.pins )
     }
 
     this.client( msg.config )
@@ -119,19 +125,42 @@ function balance_client (options) {
 
 
   function remove_client (msg, done) {
-    if ( !msg.config.id ) {
-      msg.config.id = this.util.pattern( msg.config )
+    var seneca = this
+
+    if ( !msg.config.pg ) {
+      msg.config.pg = this.util.pincanon( msg.config.pin || msg.config.pins )
     }
 
-    remove_target( msg.config.pin, msg.config.id )
+    var instance_map = global_target_map[seneca.id] || {}
+    var target_map = instance_map[msg.config.pg] || {}
+
+    var pins = msg.config.pin ? [msg.config.pin] : msg.config.pins
+
+    _.each( pins, function (pin) {
+      remove_target( target_map, pin, msg.config )
+    })
 
     done()
   }
 
 
+  function get_client_map (msg, done) {
+    var seneca = this
+    var instance_map = global_target_map[seneca.id] || {}
+    done(null, null == msg.pg ? instance_map : instance_map[msg.pg])
+  }
+
+
   function hook_client (args, clientdone) {
+    var seneca = this
+
     var type = args.type
     var client_options = seneca.util.clean(_.extend({}, options[type], args))
+
+    var pg = this.util.pincanon( client_options.pin || client_options.pins )
+
+    var instance_map = global_target_map[seneca.id] || {}
+    var target_map = instance_map[pg] || {}
 
     var model = client_options.model || actorModel
     model = _.isFunction(model) ? model : ( modelMap[model] || actorModel )
