@@ -59,6 +59,50 @@ describe('#balance-client', function () {
   })
 
 
+  it('readme', { parallel: false, timeout: 3333 }, function (done) {
+
+    function make_server (port) {
+      return Seneca({log: 'test'})
+        .listen({port: function () { return port }})
+        .add('a:1', function (msg, done) {
+          done(null, {a: 1, p: port})
+        })
+    }
+
+    var s0 = make_server('47000')
+    var s1 = make_server('47001')
+
+    s0.ready(s1.ready.bind(s1, function () {
+      Seneca({tag: 'c0', log: 'test', debug: {short_logs: true}})
+        .use('..')
+
+        .client( {type: 'balance'} )
+        .client( {port: 47000} )
+        .client( {port: 47001} )
+
+        .ready( function () {
+          this.act( 'a:1', function (e, o) {
+            expect(o.p).to.equal('47000')
+
+            this.act( 'a:1', function (e, o) {
+              expect(o.p).to.equal('47001')
+
+              this.act( 'a:1', function (e, o) {
+                expect(o.p).to.equal('47000')
+
+                this.act( 'a:1', function (e, o) {
+                  expect(o.p).to.equal('47001')
+
+                  done()
+                })
+              })
+            })
+          })
+        })
+    }))
+  })
+
+
   it('add-remove', { parallel: false }, function (done) {
     var s0 =
           Seneca(testopts)

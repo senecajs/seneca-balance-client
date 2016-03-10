@@ -1,6 +1,6 @@
 /*
   MIT License,
-  Copyright (c) 2015, Richard Rodger and other contributors.
+  Copyright (c) 2015-2016, Richard Rodger and other contributors.
 */
 
 'use strict'
@@ -230,6 +230,7 @@ function add_target ( seneca, target_map, pat, action ) {
 
   targetdesc = targetdesc || { index: 0, targets: [] }
   target_map[patkey] = targetdesc
+
   targetdesc.targets.push( { action: action, id: action.id } )
 }
 

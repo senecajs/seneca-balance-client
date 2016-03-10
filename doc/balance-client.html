@@ -61,9 +61,39 @@
             <div class="content"><div class='highlight'><pre>  }
 })
 
-<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">options</span>) </span>{
+
+<span class="hljs-built_in">module</span>.exports = balance_client
+
+<span class="hljs-keyword">var</span> global_target_map = {}
+
+<span class="hljs-keyword">var</span> preload = balance_client.preload = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">var</span> seneca = <span class="hljs-keyword">this</span>
-  <span class="hljs-keyword">var</span> target_map = {}
+
+  seneca.options({
+    transport: {
+      balance: {
+        makehandle: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">config</span>) </span>{
+          <span class="hljs-keyword">var</span> instance_map =
+                (global_target_map[seneca.id] =
+                 global_target_map[seneca.id] || {id: seneca.id})
+
+          <span class="hljs-keyword">var</span> target_map =
+                (instance_map[config.pg] =
+                 instance_map[config.pg] || {pg: config.pg, id: <span class="hljs-built_in">Math</span>.random()})
+
+          target_map.pg = config.pg
+
+          <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> pat, action </span>) </span>{
+            add_target( seneca, target_map, pat, action )
+          }
+        }
+      }
+    }
+  })
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">balance_client</span> (<span class="hljs-params">options</span>) </span>{
+  <span class="hljs-keyword">var</span> seneca = <span class="hljs-keyword">this</span>
   <span class="hljs-keyword">var</span> tu = seneca.export(<span class="hljs-string">'transport/utils'</span>)
   <span class="hljs-keyword">var</span> modelMap = {
     publish: publishModel,
@@ -83,7 +113,24 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  options = seneca.util.deepextend({}, options)
+            <div class="content"><div class='highlight'><pre>  options = seneca.util.deepextend({}, options)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>fix for Seneca 1.0.0</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (<span class="hljs-string">'1.0.0'</span> === seneca.version) {
+    preload.call(seneca)
+  }
 
   <span class="hljs-keyword">var</span> model = options.model
 
@@ -98,16 +145,6 @@
     <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'model must be a string or function'</span>)
   }
 
-  seneca.options({
-    transport: {
-      balance: {
-        handle: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> pat, action </span>) </span>{
-          add_target( pat, action )
-        }
-      }
-    }
-  })
-
   seneca.add({
     role: <span class="hljs-string">'transport'</span>, hook: <span class="hljs-string">'client'</span>, type: <span class="hljs-string">'balance'</span>
   }, hook_client)
@@ -118,34 +155,16 @@
 
   seneca.add({
     role: <span class="hljs-string">'transport'</span>, type: <span class="hljs-string">'balance'</span>, remove: <span class="hljs-string">'client'</span>
-  }, remove_client)</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-4">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-4">&#182;</a>
-              </div>
-              <p>TODO: handle duplicates</p>
+  }, remove_client)
 
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>
-  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">add_target</span> (<span class="hljs-params"> pat, action </span>) </span>{
-    <span class="hljs-keyword">var</span> patkey = make_patkey( pat )
-    <span class="hljs-keyword">var</span> targetdesc = target_map[patkey]
-
-    targetdesc = targetdesc || { index: <span class="hljs-number">0</span>, targets: [] }
-    target_map[patkey] = targetdesc
-    targetdesc.targets.push( { action: action, id: action.id } )
-  }
+  seneca.add({
+    role: <span class="hljs-string">'transport'</span>, type: <span class="hljs-string">'balance'</span>, get: <span class="hljs-string">'target-map'</span>
+  }, get_client_map)
 
 
-  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">remove_target</span> (<span class="hljs-params"> pat, action_id </span>) </span>{
-    <span class="hljs-keyword">var</span> patkey = make_patkey( pat )
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">remove_target</span> (<span class="hljs-params"> target_map, pat, config </span>) </span>{
+    <span class="hljs-keyword">var</span> action_id = config.id || seneca.util.pattern(config)
+    <span class="hljs-keyword">var</span> patkey = make_patkey( seneca, pat )
     <span class="hljs-keyword">var</span> targetdesc = target_map[patkey]
 
     targetdesc = targetdesc || { index: <span class="hljs-number">0</span>, targets: [] }
@@ -164,26 +183,9 @@
   }
 
 
-  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">make_patkey</span> (<span class="hljs-params"> pat </span>) </span>{
-    <span class="hljs-keyword">if</span> ( _.isString( pat ) ) {
-      pat = Jsonic(pat)
-    }
-
-    <span class="hljs-keyword">var</span> keys = _.keys(seneca.util.clean(pat)).sort()
-    <span class="hljs-keyword">var</span> cleanpat = {}
-
-    _.each( keys, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">k</span>) </span>{
-      cleanpat[k] = pat[k]
-    })
-
-    <span class="hljs-keyword">var</span> patkey = seneca.util.pattern( cleanpat )
-    <span class="hljs-keyword">return</span> patkey
-  }
-
-
   <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">add_client</span> (<span class="hljs-params">msg, done</span>) </span>{
-    <span class="hljs-keyword">if</span> ( !msg.config.id ) {
-      msg.config.id = <span class="hljs-keyword">this</span>.util.pattern( msg.config )
+    <span class="hljs-keyword">if</span> ( !msg.config.pg ) {
+      msg.config.pg = <span class="hljs-keyword">this</span>.util.pincanon( msg.config.pin || msg.config.pins )
     }
 
     <span class="hljs-keyword">this</span>.client( msg.config )
@@ -192,19 +194,42 @@
 
 
   <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">remove_client</span> (<span class="hljs-params">msg, done</span>) </span>{
-    <span class="hljs-keyword">if</span> ( !msg.config.id ) {
-      msg.config.id = <span class="hljs-keyword">this</span>.util.pattern( msg.config )
+    <span class="hljs-keyword">var</span> seneca = <span class="hljs-keyword">this</span>
+
+    <span class="hljs-keyword">if</span> ( !msg.config.pg ) {
+      msg.config.pg = <span class="hljs-keyword">this</span>.util.pincanon( msg.config.pin || msg.config.pins )
     }
 
-    remove_target( msg.config.pin, msg.config.id )
+    <span class="hljs-keyword">var</span> instance_map = global_target_map[seneca.id] || {}
+    <span class="hljs-keyword">var</span> target_map = instance_map[msg.config.pg] || {}
+
+    <span class="hljs-keyword">var</span> pins = msg.config.pin ? [msg.config.pin] : msg.config.pins
+
+    _.each( pins, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">pin</span>) </span>{
+      remove_target( target_map, pin, msg.config )
+    })
 
     done()
   }
 
 
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get_client_map</span> (<span class="hljs-params">msg, done</span>) </span>{
+    <span class="hljs-keyword">var</span> seneca = <span class="hljs-keyword">this</span>
+    <span class="hljs-keyword">var</span> instance_map = global_target_map[seneca.id] || {}
+    done(<span class="hljs-literal">null</span>, <span class="hljs-literal">null</span> == msg.pg ? instance_map : instance_map[msg.pg])
+  }
+
+
   <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">hook_client</span> (<span class="hljs-params">args, clientdone</span>) </span>{
+    <span class="hljs-keyword">var</span> seneca = <span class="hljs-keyword">this</span>
+
     <span class="hljs-keyword">var</span> type = args.type
     <span class="hljs-keyword">var</span> client_options = seneca.util.clean(_.extend({}, options[type], args))
+
+    <span class="hljs-keyword">var</span> pg = <span class="hljs-keyword">this</span>.util.pincanon( client_options.pin || client_options.pins )
+
+    <span class="hljs-keyword">var</span> instance_map = global_target_map[seneca.id] || {}
+    <span class="hljs-keyword">var</span> target_map = instance_map[pg] || {}
 
     <span class="hljs-keyword">var</span> model = client_options.model || actorModel
     model = _.isFunction(model) ? model : ( modelMap[model] || actorModel )
@@ -264,6 +289,45 @@
     targets[index].action.call( seneca, args, callback )
     targetdesc.index = ( index + <span class="hljs-number">1</span> ) % targets.length
   }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>TODO: handle duplicates</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">add_target</span> (<span class="hljs-params"> seneca, target_map, pat, action </span>) </span>{
+  <span class="hljs-keyword">var</span> patkey = make_patkey( seneca, pat )
+  <span class="hljs-keyword">var</span> targetdesc = target_map[patkey]
+
+  targetdesc = targetdesc || { index: <span class="hljs-number">0</span>, targets: [] }
+  target_map[patkey] = targetdesc
+  targetdesc.targets.push( { action: action, id: action.id } )
+}
+
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">make_patkey</span> (<span class="hljs-params"> seneca, pat </span>) </span>{
+  <span class="hljs-keyword">if</span> ( _.isString( pat ) ) {
+    pat = Jsonic(pat)
+  }
+
+  <span class="hljs-keyword">var</span> keys = _.keys(seneca.util.clean(pat)).sort()
+  <span class="hljs-keyword">var</span> cleanpat = {}
+
+  _.each( keys, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">k</span>) </span>{
+    cleanpat[k] = pat[k]
+  })
+
+  <span class="hljs-keyword">var</span> patkey = seneca.util.pattern( cleanpat )
+  <span class="hljs-keyword">return</span> patkey
 }</pre></div></div>
             
         </li>
