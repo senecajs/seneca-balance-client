@@ -322,7 +322,7 @@ describe('#balance-client', function () {
             var c0 =
               Seneca(testopts)
               .error(done)
-              .use('..', {model: 'actor'})
+              .use('..', {model: 'consume'})
               .client({ type: 'balance', pin: 'a:1' })
               .client({ port: 44440, pin: 'a:1' })
               .client({ port: 44441, pin: 'a:1' })
@@ -350,7 +350,7 @@ describe('#balance-client', function () {
   })
 
 
-  it('supports publish model option', { parallel: false }, function (done) {
+  it('supports observe model option', { parallel: false }, function (done) {
     var t = {}
     var s0
     var s1
@@ -369,7 +369,7 @@ describe('#balance-client', function () {
     c0 = Seneca({tag: 'c0', log: 'silent', debug: {short_logs: true}})
       .error(done)
       .use('..')
-      .client({ type: 'balance', pin: 'a:1', model: 'publish' })
+      .client({ type: 'balance', pin: 'a:1', model: 'observe' })
       .client({ port: 44440, pin: 'a:1' })
       .client({ port: 44441, pin: 'a:1' })
 
@@ -471,7 +471,7 @@ describe('#balance-client', function () {
 
     c0 = Seneca({tag: 'c0', log: 'silent', debug: {short_logs: true}})
       .error(done).use('..')
-      .client({ type: 'balance', pin: 'a:1', model: 'publish' })
+      .client({ type: 'balance', pin: 'a:1', model: 'observe' })
       .client({ port: 44440, pin: 'a:1' })
       .client({ port: 44441, pin: 'a:1' })
 

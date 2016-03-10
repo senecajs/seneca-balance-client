@@ -51,8 +51,12 @@ function balance_client (options) {
   var seneca = this
   var tu = seneca.export('transport/utils')
   var modelMap = {
-    publish: publishModel,
-    actor: actorModel
+    observe: observeModel,
+    consume: consumeModel,
+
+    // legacy
+    publish: observeModel,
+    actor: consumeModel
   }
 
   // Merge default options with any provided by the caller
@@ -66,7 +70,7 @@ function balance_client (options) {
   var model = options.model
 
   if (model === undefined) {
-    model = modelMap.actor
+    model = modelMap.consume
   }
   else if (typeof model === 'string') {
     model = modelMap[model]
@@ -96,20 +100,20 @@ function balance_client (options) {
   function remove_target ( target_map, pat, config ) {
     var action_id = config.id || seneca.util.pattern(config)
     var patkey = make_patkey( seneca, pat )
-    var targetdesc = target_map[patkey]
+    var targetstate = target_map[patkey]
 
-    targetdesc = targetdesc || { index: 0, targets: [] }
-    target_map[patkey] = targetdesc
+    targetstate = targetstate || { index: 0, targets: [] }
+    target_map[patkey] = targetstate
 
-    for ( var i = 0; i < targetdesc.targets.length; i++ ) {
-      if ( action_id === targetdesc.targets[i].id ) {
+    for ( var i = 0; i < targetstate.targets.length; i++ ) {
+      if ( action_id === targetstate.targets[i].id ) {
         break
       }
     }
 
-    if ( i < targetdesc.targets.length ) {
-      targetdesc.targets.splice(i, 1)
-      targetdesc.index = 0
+    if ( i < targetstate.targets.length ) {
+      targetstate.targets.splice(i, 1)
+      targetstate.index = 0
     }
   }
 
@@ -151,31 +155,31 @@ function balance_client (options) {
   }
 
 
-  function hook_client (args, clientdone) {
+  function hook_client (msg, clientdone) {
     var seneca = this
 
-    var type = args.type
-    var client_options = seneca.util.clean(_.extend({}, options[type], args))
+    var type = msg.type
+    var client_options = seneca.util.clean(_.extend({}, options[type], msg))
 
     var pg = this.util.pincanon( client_options.pin || client_options.pins )
 
     var instance_map = global_target_map[seneca.id] || {}
     var target_map = instance_map[pg] || {}
 
-    var model = client_options.model || actorModel
-    model = _.isFunction(model) ? model : ( modelMap[model] || actorModel )
+    var model = client_options.model || consumeModel
+    model = _.isFunction(model) ? model : ( modelMap[model] || consumeModel )
 
     tu.make_client(make_send, client_options, clientdone)
 
     function make_send (spec, topic, send_done) {
       seneca.log.debug('client', 'send', topic + '_res', client_options, seneca)
 
-      send_done(null, function (args, done) {
-        var patkey = args.meta$.pattern
-        var targetdesc = target_map[patkey]
+      send_done(null, function (msg, done) {
+        var patkey = msg.meta$.pattern
+        var targetstate = target_map[patkey]
 
-        if ( targetdesc ) {
-          model(this, args, targetdesc, done)
+        if ( targetstate ) {
+          model(this, msg, targetstate, done)
           return
         }
 
@@ -183,22 +187,22 @@ function balance_client (options) {
       })
     }
 
-    seneca.add('role:seneca,cmd:close', function (close_args, done) {
+    seneca.add('role:seneca,cmd:close', function (close_msg, done) {
       var closer = this
-      closer.prior(close_args, done)
+      closer.prior(close_msg, done)
     })
   }
 
 
-  function publishModel (seneca, args, targetdesc, done) {
-    if ( 0 === targetdesc.targets.length ) {
+  function observeModel (seneca, msg, targetstate, done) {
+    if ( 0 === targetstate.targets.length ) {
       return done(error('no-current-target'))
     }
 
     var first = true
-    for ( var i = 0; i < targetdesc.targets.length; i++ ) {
-      var target = targetdesc.targets[i]
-      target.action.call(seneca, args, function () {
+    for ( var i = 0; i < targetstate.targets.length; i++ ) {
+      var target = targetstate.targets[i]
+      target.action.call(seneca, msg, function () {
         if ( first ) {
           done.apply(seneca, arguments)
           first = false
@@ -208,17 +212,20 @@ function balance_client (options) {
   }
 
 
-  function actorModel (seneca, args, targetdesc, callback) {
-    var targets = targetdesc.targets
-    var index = targetdesc.index
+  function consumeModel (seneca, msg, targetstate, done) {
+    var targets = targetstate.targets
+    var index = targetstate.index
 
     if (!targets[index]) {
-      targetdesc.index = 0
-      return callback( error('no-current-target') )
+      index = targetstate.index = 0
     }
 
-    targets[index].action.call( seneca, args, callback )
-    targetdesc.index = ( index + 1 ) % targets.length
+    if (!targets[index]) {
+      return done( error('no-current-target', msg) )
+    }
+
+    targets[index].action.call( seneca, msg, done )
+    targetstate.index = ( index + 1 ) % targets.length
   }
 }
 
@@ -226,12 +233,12 @@ function balance_client (options) {
 // TODO: handle duplicates
 function add_target ( seneca, target_map, pat, action ) {
   var patkey = make_patkey( seneca, pat )
-  var targetdesc = target_map[patkey]
+  var targetstate = target_map[patkey]
 
-  targetdesc = targetdesc || { index: 0, targets: [] }
-  target_map[patkey] = targetdesc
+  targetstate = targetstate || { index: 0, targets: [] }
+  target_map[patkey] = targetstate
 
-  targetdesc.targets.push( { action: action, id: action.id } )
+  targetstate.targets.push( { action: action, id: action.id } )
 }
 
 

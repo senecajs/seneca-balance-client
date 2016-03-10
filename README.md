@@ -95,20 +95,79 @@ require('seneca')()
 The client will balance requests over both servers using
 round-robin. As there is no _pin_ in the `.client` configuration, this
 will apply to all non-local actions. Add a _pin_ to restrict the
-action patterns to which this applies.
-
-<!--
+action patterns to which this applies - make sure to use the same
+_pin_ on both client and server to avoid ambiguity.
 
 ## Usage
 
-TODO
+The plugin provides two balancing models:
+
+* `consume`: messages are sent to individual targets, using a round-robin approach
+* `observe`: messages are duplicated and sent to all targets
+
+You specify the model using the plugin option `model`:
+
+```
+var Seneca = require('seneca')
+
+var s0 = Seneca({tag: 's0'})
+  .listen(44440)
+  .add('a:1', function (msg, done) {
+    console.log('s0;x='+msg.x);
+    done()
+  })
+
+var s1 = Seneca({tag: 's1'})
+  .listen(44441)
+  .add('a:1', function (msg, done) {
+    console.log('s1;x='+msg.x);
+    done()
+  })
+
+var c0 = Seneca({tag: 'c0'})
+  .use('..')
+  .client({ type: 'balance', pin: 'a:1', model: 'observe' })
+  .client({ port: 44440, pin: 'a:1' })
+  .client({ port: 44441, pin: 'a:1' })
 
 
-## Releases
+s0.ready( s1.ready.bind(s1, c0.ready.bind(c0, function () {
+  c0.act('a:1,x:y')
 
-TODO
+  // wait a little bit to avoid shutting down in mid flow
+  setTimeout( 
+    s0.close.bind( s0, s1.close.bind(s1, c0.close.bind(c0))), 111 )
+})))
+```
 
--->
+You can also provide your own balancing model by providing function
+with signature `(seneca, msg, targetstate, done)` as the value of the
+`model` setting:
+
+```
+...
+    .client({
+      type: 'balance',
+      pin: 'a:1',
+      model: function (seneca, msg, targetstate, done) {
+        if (0 === targetstate.targets.length) {
+          return done( new Error('No targets') )
+        }
+
+        // select a random target
+        var index = Math.floor(Math.random() * targetstate.targets.length)
+        targetstate.targets[index].action.call( seneca, msg, done)
+      }
+    })
+...
+```
+
+The `targetstate` object provides you with the list of currently
+available targets.  Review the internal implementations of the
+`observeModel` and the `consumeModel` in
+[balance-client.js](https://github.com/rjrodger/seneca-balance-client/blob/master/balance-client.js)
+for a starting point to write your own model.
+
 
 ## Contributing
 
