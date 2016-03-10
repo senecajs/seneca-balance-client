@@ -294,15 +294,37 @@ describe('#balance-client', function () {
   })
 
 
-  it('processes actions even when no upstreams are available', function (done) {
+  it('no-target-error', function (done) {
     var c0 =
       Seneca(testopts)
-      .use('..')
-      .client({ type: 'balance', pin: 'a:1' })
-      .act('a:1', function (e, o) {
-        expect(e).to.exist()
-        c0.close(done)
-      })
+          .use('..')
+          .client({ type: 'balance', pin: 'a:1' })
+          .act('a:1', function (e, o) {
+            expect(e).to.exist()
+            expect(e.code).to.equal('no-target')
+            c0.close(done)
+          })
+  })
+
+
+  it('no-current-target-error', function (done) {
+    var c0 =
+      Seneca(testopts)
+          .use('..')
+          .client({ type: 'balance', pin: 'a:1' })
+          .client({ pin: 'a:1', port: 55555 })
+          .ready( function () {
+            this.act(
+              'role:transport,type:balance,remove:client',
+              { config: { pin: 'a:1', port: 55555 } },
+              function (e, o) {
+                this.act('a:1', function (e, o) {
+                  expect(e).to.exist()
+                  expect(e.code).to.equal('no-current-target')
+                  c0.close(done)
+                })
+              })
+          })
   })
 
 

@@ -12,7 +12,8 @@ var Jsonic = require('jsonic')
 var error = Eraro({
   package: 'seneca',
   msgmap: {
-    // TODO: error code messages
+    'no-target': 'No targets have been registered for message <%=msg%>',
+    'no-current-target': 'No targets are currently active for message <%=msg%>'
   }
 })
 
@@ -119,6 +120,8 @@ function balance_client (options) {
 
 
   function add_client (msg, done) {
+    msg.config = msg.config || {}
+
     if ( !msg.config.pg ) {
       msg.config.pg = this.util.pincanon( msg.config.pin || msg.config.pins )
     }
@@ -130,6 +133,8 @@ function balance_client (options) {
 
   function remove_client (msg, done) {
     var seneca = this
+
+    msg.config = msg.config || {}
 
     if ( !msg.config.pg ) {
       msg.config.pg = this.util.pincanon( msg.config.pin || msg.config.pins )
@@ -183,7 +188,7 @@ function balance_client (options) {
           return
         }
 
-        else return done( error('no-target') )
+        else return done( error('no-target', {msg: msg}) )
       })
     }
 
@@ -196,7 +201,7 @@ function balance_client (options) {
 
   function observeModel (seneca, msg, targetstate, done) {
     if ( 0 === targetstate.targets.length ) {
-      return done(error('no-current-target'))
+      return done(error('no-current-target', {msg: msg}))
     }
 
     var first = true
@@ -221,7 +226,7 @@ function balance_client (options) {
     }
 
     if (!targets[index]) {
-      return done( error('no-current-target', msg) )
+      return done( error('no-current-target', {msg: msg}) )
     }
 
     targets[index].action.call( seneca, msg, done )

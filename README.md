@@ -133,7 +133,7 @@ s0.ready( s1.ready.bind(s1, c0.ready.bind(c0, function () {
 })))
 ```
 
-You can also provide your own balancing model by providing function
+You can also provide your own balancing model by providing a function
 with signature `(seneca, msg, targetstate, done)` as the value of the
 `model` setting:
 
