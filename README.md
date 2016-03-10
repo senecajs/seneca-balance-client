@@ -14,13 +14,6 @@ client message routing.
 This module is a plugin for the Seneca framework. It provides a
 transport client that load balances outbound messages on a per-pattern basis.
 
-*seneca-balance-client*'s source can be read in an annotated fashion by,
-
-- running `npm run annotate`
-- viewing [online](http://senecajs.org/annotations/balance-client.html).
-
-The annotated source can be found locally at [./doc/seneca-balance-client.html]().
-
 If you're using this module, and need help, you can:
 
 - Post a [github issue][],
