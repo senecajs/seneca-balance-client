@@ -22,7 +22,15 @@ module.exports = balance_client
 
 var global_target_map = {}
 
-var preload = balance_client.preload = function () {
+var option_defaults = {
+  debug: {
+    client_updates: false
+  }
+}
+
+var global_options = {}
+
+balance_client.preload = function () {
   var seneca = this
 
   seneca.options({
@@ -40,7 +48,7 @@ var preload = balance_client.preload = function () {
           target_map.pg = config.pg
 
           return function ( pat, action ) {
-            add_target( seneca, target_map, pat, action )
+            add_target( seneca, target_map, config, pat, action )
           }
         }
       }
@@ -60,17 +68,15 @@ function balance_client (options) {
     actor: consumeModel
   }
 
-  // Merge default options with any provided by the caller
-  options = seneca.util.deepextend({}, options)
+  options = seneca.util.deepextend(option_defaults, options)
 
-  // fix for Seneca 1.0.0
-  if ('1.0.0' === seneca.version) {
-    preload.call(seneca)
-  }
+  // hack to make add_target debug logging work
+  // to be fixed when seneca plugin handling is rewritten to not need preload
+  global_options = seneca.util.deepextend(global_options, options)
 
   var model = options.model
 
-  if (model === undefined) {
+  if (null == model) {
     model = modelMap.consume
   }
   else if (typeof model === 'string') {
@@ -102,6 +108,7 @@ function balance_client (options) {
     var action_id = config.id || seneca.util.pattern(config)
     var patkey = make_patkey( seneca, pat )
     var targetstate = target_map[patkey]
+    var found = false
 
     targetstate = targetstate || { index: 0, targets: [] }
     target_map[patkey] = targetstate
@@ -115,6 +122,13 @@ function balance_client (options) {
     if ( i < targetstate.targets.length ) {
       targetstate.targets.splice(i, 1)
       targetstate.index = 0
+      found = true
+    }
+
+    // console.log(seneca.id, 'remove', patkey, action_id, found)
+
+    if (options.debug && options.debug.client_updates) {
+      seneca.log.info('remove', patkey, action_id, found)
     }
   }
 
@@ -235,15 +249,34 @@ function balance_client (options) {
 }
 
 
-// TODO: handle duplicates
-function add_target ( seneca, target_map, pat, action ) {
+function add_target ( seneca, target_map, config, pat, action ) {
   var patkey = make_patkey( seneca, pat )
   var targetstate = target_map[patkey]
+  var add = true
 
   targetstate = targetstate || { index: 0, targets: [] }
   target_map[patkey] = targetstate
 
-  targetstate.targets.push( { action: action, id: action.id } )
+  // don't add duplicates
+  for (var i = 0; i < targetstate.targets.length; ++i) {
+    if (action.id === targetstate.targets[i].id) {
+      add = false
+      break
+    }
+  }
+
+  if (add) {
+    targetstate.targets.push({ action: action,
+                               id: action.id,
+                               config: config
+                             })
+  }
+
+  // console.log(seneca.id, 'add', patkey, action.id, add)
+
+  if (global_options.debug && global_options.debug.client_updates) {
+    seneca.log.info('add', patkey, action.id, add)
+  }
 }
 
 
