@@ -1,4 +1,4 @@
-![Seneca](http://senecajs.org/files/assets/seneca-logo.png) 
+![Seneca](http://senecajs.org/files/assets/seneca-logo.png)
 
 > A [Seneca.js][] transport plugin that provides various client-side
 load balancing strategies, and enables dynamic reconfiguration of
@@ -11,6 +11,8 @@ client message routing.
 [![Dependency Status][david-badge]][david-url]
 [![Gitter][gitter-badge]][gitter-url]
 
+## Description
+
 This module is a plugin for the Seneca framework. It provides a
 transport client that load balances outbound messages on a per-pattern basis.
 
@@ -21,7 +23,7 @@ If you're using this module, and need help, you can:
 - Ask on the [Gitter][gitter-url].
 
 If you are new to Seneca in general, please take a look at
-[senecajs.org][]. We have everything from tutorials to sample apps to
+[Senecajs.org][]. We have everything from tutorials to sample apps to
 help get you up and running quickly.
 
 
@@ -36,13 +38,6 @@ And in your code:
 ```js
 require('seneca')()
   .use('balance-client', { ... options ... })
-```
-
-## Test
-To run tests, simply use npm:
-
-```sh
-npm run test
 ```
 
 ## Quick Example
@@ -100,7 +95,7 @@ The plugin provides two balancing models:
 
 You specify the model using the plugin option `model`:
 
-```
+```js
 var Seneca = require('seneca')
 
 var s0 = Seneca({tag: 's0'})
@@ -128,7 +123,7 @@ s0.ready( s1.ready.bind(s1, c0.ready.bind(c0, function () {
   c0.act('a:1,x:y')
 
   // wait a little bit to avoid shutting down in mid flow
-  setTimeout( 
+  setTimeout(
     s0.close.bind( s0, s1.close.bind(s1, c0.close.bind(c0))), 111 )
 })))
 ```
@@ -137,7 +132,7 @@ You can also provide your own balancing model by providing a function
 with signature `(seneca, msg, targetstate, done)` as the value of the
 `model` setting:
 
-```
+```js
 ...
     .client({
       type: 'balance',
@@ -168,8 +163,15 @@ The [Senecajs org][] encourages open participation. If you feel you
 can help in any way, be it with documentation, examples, extra
 testing, or new features please get in touch.
 
+## Test
+To run tests, simply use npm:
+
+```sh
+npm run test
+```
+
 ## License
-Copyright (c) 2015, Richard Rodger and other contributors.
+Copyright (c) 2010-2016, Richard Rodger and other contributors.
 Licensed under [MIT][].
 
 [MIT]: ./LICENSE
@@ -188,4 +190,3 @@ Licensed under [MIT][].
 [gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
 [gitter-url]: https://gitter.im/rjrodger/seneca
 [github issue]: https://github.com/rjrodger/seneca-balance-client/issues
-
