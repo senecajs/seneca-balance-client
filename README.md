@@ -26,6 +26,8 @@ If you are new to Seneca in general, please take a look at
 [Senecajs.org][]. We have everything from tutorials to sample apps to
 help get you up and running quickly.
 
+### Seneca compatibility
+Supports Seneca versions **1.x** and **2.x**
 
 ## Install
 
