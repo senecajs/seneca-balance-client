@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "test": "lab -v -P test -t 80 -L",
+    "test:node6": "LAB_FLAGS='--leaks' && npm test",
     "coverage": "lab -s test/*.test.js -r lcov | coveralls",
     "lint": "lab -dL",
     "annotate": "docco balance-client.js -o doc"
