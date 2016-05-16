@@ -9,7 +9,7 @@
     "Richard Rodger (http://richardrodger.com)"
   ],
   "scripts": {
-    "test": "lab -v -P test -t 80 -L",
+    "test": "lab -v -P test -t 88 -L $LAB_FLAGS",
     "test:node6": "LAB_FLAGS='--leaks' && npm test",
     "coverage": "lab -s test/*.test.js -r lcov | coveralls",
     "lint": "lab -dL",
