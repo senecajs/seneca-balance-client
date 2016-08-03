@@ -155,7 +155,7 @@ with signature `(seneca, msg, targetstate, done)` as the value of the
 The `targetstate` object provides you with the list of currently
 available targets.  Review the internal implementations of the
 `observeModel` and the `consumeModel` in
-[balance-client.js](https://github.com/rjrodger/seneca-balance-client/blob/master/balance-client.js)
+[balance-client.js](https://github.com/senecajs/seneca-balance-client/blob/master/balance-client.js)
 for a starting point to write your own model.
 
 
@@ -179,16 +179,16 @@ Licensed under [MIT][].
 [MIT]: ./LICENSE
 [npm-badge]: https://img.shields.io/npm/v/seneca-balance-client.svg
 [npm-url]: https://npmjs.com/package/seneca-balance-client
-[coveralls-badge]:https://coveralls.io/repos/rjrodger/seneca-balance-client/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/rjrodger/seneca-balance-client?branch=master
-[david-badge]: https://david-dm.org/rjrodger/seneca-balance-client.svg
-[david-url]: https://david-dm.org/rjrodger/seneca-balance-client
+[coveralls-badge]:https://coveralls.io/repos/senecajs/seneca-balance-client/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/senecajs/seneca-balance-client?branch=master
+[david-badge]: https://david-dm.org/senecajs/seneca-balance-client.svg
+[david-url]: https://david-dm.org/senecajs/seneca-balance-client
 [Senecajs org]: https://github.com/senecajs/
 [Seneca.js]: https://www.npmjs.com/package/seneca
 [@senecajs]: http://twitter.com/senecajs
 [senecajs.org]: http://senecajs.org/
-[travis-badge]: https://travis-ci.org/rjrodger/seneca-balance-client.svg
-[travis-url]: https://travis-ci.org/rjrodger/seneca-balance-client
+[travis-badge]: https://travis-ci.org/senecajs/seneca-balance-client.svg
+[travis-url]: https://travis-ci.org/senecajs/seneca-balance-client
 [gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
-[gitter-url]: https://gitter.im/rjrodger/seneca
-[github issue]: https://github.com/rjrodger/seneca-balance-client/issues
+[gitter-url]: https://gitter.im/senecajs/seneca
+[github issue]: https://github.com/senecajs/seneca-balance-client/issues
