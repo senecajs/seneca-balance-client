@@ -37,6 +37,8 @@ balance_client.preload = function () {
     transport: {
       balance: {
         makehandle: function (config) {
+          //console.log('MH',config)
+
           var instance_map =
                 (global_target_map[seneca.id] =
                  global_target_map[seneca.id] || {id: seneca.id})
@@ -48,6 +50,8 @@ balance_client.preload = function () {
           target_map.pg = config.pg
 
           return function ( pat, action ) {
+            //console.log('MHF', pat, action)
+            //console.trace()
             add_target( seneca, target_map, config, pat, action )
           }
         }
@@ -87,6 +91,7 @@ function balance_client (options) {
     throw new Error('model must be a string or function')
   }
 
+  //console.log('BC adders',seneca.id,seneca.did,seneca.fixedargs)
   seneca.add({
     role: 'transport', hook: 'client', type: 'balance'
   }, hook_client)
@@ -140,6 +145,7 @@ function balance_client (options) {
       msg.config.pg = this.util.pincanon( msg.config.pin || msg.config.pins )
     }
 
+    //console.log('AC',msg.config)
     this.client( msg.config )
     done()
   }
@@ -175,7 +181,8 @@ function balance_client (options) {
 
 
   function hook_client (msg, clientdone) {
-    var seneca = this
+    //console.log('HC in', msg)
+    var seneca = this.root.delegate()
 
     var type = msg.type
     var client_options = seneca.util.clean(_.extend({}, options[type], msg))
@@ -188,21 +195,47 @@ function balance_client (options) {
     var model = client_options.model || consumeModel
     model = _.isFunction(model) ? model : ( modelMap[model] || consumeModel )
 
-    tu.make_client(make_send, client_options, clientdone)
+    //console.log('HC',pg,client_options)
 
-    function make_send (spec, topic, send_done) {
-      seneca.log.debug('client', 'send', topic + '_res', client_options, seneca)
+    // legacy transport
+    if (tu.make_client) {
+      var make_send = function (spec, topic, send_done) {
+        seneca.log.debug('client', 'send', topic + '_res', client_options, seneca)
 
-      send_done(null, function (msg, done) {
+        send_done(null, function (msg, done) {
+          var patkey = msg.meta$.pattern
+          var targetstate = target_map[patkey]
+
+          if ( targetstate ) {
+            model(this, msg, targetstate, done)
+            return
+          }
+
+          else return done( error('no-target', {msg: msg}) )
+        })
+      }
+
+      tu.make_client(make_send, client_options, clientdone)
+    }
+
+    else {
+      var send_msg = function (msg, reply) {
+        msg = tu.externalize_msg(seneca, msg)
+
         var patkey = msg.meta$.pattern
         var targetstate = target_map[patkey]
 
         if ( targetstate ) {
-          model(this, msg, targetstate, done)
+          model(this, msg, targetstate, reply)
           return
         }
 
-        else return done( error('no-target', {msg: msg}) )
+        else return reply( error('no-target', {msg: msg}) )
+      }
+
+      return clientdone({
+        config: msg,
+        send: send_msg
       })
     }
 
@@ -251,6 +284,9 @@ function balance_client (options) {
 
 function add_target ( seneca, target_map, config, pat, action ) {
   var patkey = make_patkey( seneca, pat )
+  //console.log('AT', config, pat, patkey)
+
+
   var targetstate = target_map[patkey]
   var add = true
 
@@ -272,7 +308,7 @@ function add_target ( seneca, target_map, config, pat, action ) {
                              })
   }
 
-  // console.log(seneca.id, 'add', patkey, action.id, add)
+  //console.log('AT', seneca.id, 'add', patkey, action.id, add)
 
   if (global_options.debug && global_options.debug.client_updates) {
     seneca.log.info('add', patkey, action.id, add)

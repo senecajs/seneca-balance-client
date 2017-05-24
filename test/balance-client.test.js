@@ -59,28 +59,40 @@ describe('#balance-client', function () {
   })
 
 
-  it('readme', { parallel: false, timeout: 3333 }, function (done) {
-
-    function make_server (port) {
-      return Seneca({log: 'test'})
+  it('readme', { parallel: false, timeout: 3333 }, function (fin) {
+    function make_server (tag, port, fin) {
+      return Seneca({tag:tag})
+        .test(fin)
         .listen({port: function () { return port }})
         .add('a:1', function (msg, done) {
           done(null, {a: 1, p: port})
         })
     }
 
-    var s0 = make_server('47000')
-    var s1 = make_server('47001')
+    var s0 = make_server('s0','47000',fin)
+    var s1 = make_server('s1','47001',fin)
 
     s0.ready(s1.ready.bind(s1, function () {
-      Seneca({tag: 'c0', log: 'test', debug: {short_logs: true}})
+      Seneca({tag: 'c0', legacy:{transport:false}})
+        .test(fin)
         .use('..')
-
+/*
+        .client( {type: 'balance', pin:'a:1'} )
+        .client( {port: 47000, pin:'a:1'} )
+        .client( {port: 47001, pin:'a:1'} )
+*/
         .client( {type: 'balance'} )
         .client( {port: 47000} )
         .client( {port: 47001} )
 
+
         .ready( function () {
+/*
+          this.act({role: 'transport', type: 'balance', get: 'target-map'}, function(err,out){
+            console.log('--TM')
+            console.dir(out,{depth:null})
+          })
+  */        
           this.act( 'a:1', function (e, o) {
             expect(o.p).to.equal('47000')
 
@@ -93,7 +105,7 @@ describe('#balance-client', function () {
                 this.act( 'a:1', function (e, o) {
                   expect(o.p).to.equal('47001')
 
-                  done()
+                  fin()
                 })
               })
             })
@@ -299,7 +311,7 @@ describe('#balance-client', function () {
       Seneca(testopts)
           .use('..')
           .client({ type: 'balance', pin: 'a:1' })
-          .act('a:1', function (e, o) {
+          .act('a:1', function (e) {
             expect(e).to.exist()
             expect(e.code).to.equal('no-target')
             c0.close(done)
@@ -317,8 +329,9 @@ describe('#balance-client', function () {
             this.act(
               'role:transport,type:balance,remove:client',
               { config: { pin: 'a:1', port: 55555 } },
-              function (e, o) {
-                this.act('a:1', function (e, o) {
+              function (e) {
+                expect(e).to.not.exist()
+                this.act('a:1', function (e) {
                   expect(e).to.exist()
                   expect(e.code).to.equal('no-current-target')
                   c0.close(done)
