@@ -61,11 +61,11 @@ describe('#balance-client', function () {
 
   it('readme', { parallel: false, timeout: 3333 }, function (fin) {
     function make_server (tag, port, fin) {
-      return Seneca({tag:tag})
+      return Seneca({id$:tag, legacy:{transport:false}})
         .test(fin)
         .listen({port: function () { return port }})
         .add('a:1', function (msg, done) {
-          done(null, {a: 1, p: port})
+          done({a: 1, p: port})
         })
     }
 
@@ -73,39 +73,32 @@ describe('#balance-client', function () {
     var s1 = make_server('s1','47001',fin)
 
     s0.ready(s1.ready.bind(s1, function () {
-      Seneca({tag: 'c0', legacy:{transport:false}})
+      Seneca({id$: 'c0', legacy:{transport:false}})
         .test(fin)
         .use('..')
-/*
-        .client( {type: 'balance', pin:'a:1'} )
-        .client( {port: 47000, pin:'a:1'} )
-        .client( {port: 47001, pin:'a:1'} )
-*/
         .client( {type: 'balance'} )
         .client( {port: 47000} )
         .client( {port: 47001} )
 
 
         .ready( function () {
-/*
           this.act({role: 'transport', type: 'balance', get: 'target-map'}, function(err,out){
-            console.log('--TM')
-            console.dir(out,{depth:null})
-          })
-  */        
-          this.act( 'a:1', function (e, o) {
-            expect(o.p).to.equal('47000')
+            expect(out[''][''].targets.length).equal(2)
 
             this.act( 'a:1', function (e, o) {
-              expect(o.p).to.equal('47001')
+              expect(o.p).to.equal('47000')
 
               this.act( 'a:1', function (e, o) {
-                expect(o.p).to.equal('47000')
+                expect(o.p).to.equal('47001')
 
                 this.act( 'a:1', function (e, o) {
-                  expect(o.p).to.equal('47001')
+                  expect(o.p).to.equal('47000')
 
-                  fin()
+                  this.act( 'a:1', function (e, o) {
+                    expect(o.p).to.equal('47001')
+
+                    fin()
+                  })
                 })
               })
             })

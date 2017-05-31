@@ -202,12 +202,12 @@ function balance_client (options) {
       var make_send = function (spec, topic, send_done) {
         seneca.log.debug('client', 'send', topic + '_res', client_options, seneca)
 
-        send_done(null, function (msg, done) {
-          var patkey = msg.meta$.pattern
+        send_done(null, function (msg, done, meta) {
+          var patkey = (meta||msg.meta$).pattern
           var targetstate = target_map[patkey]
 
           if ( targetstate ) {
-            model(this, msg, targetstate, done)
+            model(this, msg, targetstate, done, meta)
             return
           }
 
@@ -219,14 +219,14 @@ function balance_client (options) {
     }
 
     else {
-      var send_msg = function (msg, reply) {
+      var send_msg = function (msg, reply, meta) {
         msg = tu.externalize_msg(seneca, msg)
 
-        var patkey = msg.meta$.pattern
+        var patkey = (meta||msg.meta$).pattern
         var targetstate = target_map[patkey]
 
         if ( targetstate ) {
-          model(this, msg, targetstate, reply)
+          model(this, msg, targetstate, reply, meta)
           return
         }
 
@@ -246,7 +246,7 @@ function balance_client (options) {
   }
 
 
-  function observeModel (seneca, msg, targetstate, done) {
+  function observeModel (seneca, msg, targetstate, done, meta) {
     if ( 0 === targetstate.targets.length ) {
       return done(error('no-current-target', {msg: msg}))
     }
@@ -259,12 +259,12 @@ function balance_client (options) {
           done.apply(seneca, arguments)
           first = false
         }
-      })
+      }, meta)
     }
   }
 
 
-  function consumeModel (seneca, msg, targetstate, done) {
+  function consumeModel (seneca, msg, targetstate, done, meta) {
     var targets = targetstate.targets
     var index = targetstate.index
 
@@ -276,7 +276,7 @@ function balance_client (options) {
       return done( error('no-current-target', {msg: msg}) )
     }
 
-    targets[index].action.call( seneca, msg, done )
+    targets[index].action.call( seneca, msg, done, meta )
     targetstate.index = ( index + 1 ) % targets.length
   }
 }
