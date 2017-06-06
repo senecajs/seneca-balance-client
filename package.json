@@ -46,7 +46,7 @@
     "docco": "0.7.x",
     "lab": "11.0.x",
     "pre-commit": "1.1.x",
-    "seneca": "../seneca"
+    "seneca": "plugin"
   },
   "pre-commit": [
     "test"
