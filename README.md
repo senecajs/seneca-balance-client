@@ -27,7 +27,8 @@ If you are new to Seneca in general, please take a look at
 help get you up and running quickly.
 
 ### Seneca compatibility
-Supports Seneca versions **1.x** and **3.x**
+Supports Seneca versions **3.x** and above.
+
 
 ## Install
 
