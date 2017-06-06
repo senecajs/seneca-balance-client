@@ -15,9 +15,9 @@
     "Dean McDonnell (https://github.com/mcdonnelldean)"
   ],
   "scripts": {
-    "test": "lab -v -P test -L -t 80",
-    "coveralls": "lab -s -P test -r lcov | coveralls",
-    "coverage": "lab -v -P test -L -t 80 -r html > coverage.html",
+    "test": "lab -v -P test -L -t 80 -I WebAssembly",
+    "coveralls": "lab -s -P test -r lcov  -I WebAssembly | coveralls",
+    "coverage": "lab -v -P test -L -t 80 -r html  -I WebAssembly > coverage.html",
     "annotate": "docco balance-client.js -o docs/annotated"
   },
   "repository": {
