@@ -14,6 +14,9 @@ var describe = lab.describe
 var it = lab.it
 var expect = Code.expect
 
+// TODO: cleanup indentation so that prettier works
+
+// TODO: remove as should use .test(fin)
 var testopts = { log: 'silent' }
 
 describe('#balance-client', function() {
@@ -51,44 +54,45 @@ describe('#balance-client', function() {
     )
   })
 
-
-  it('happy', { parallel: false }, function (done) {
-    var s0 = Seneca(testopts).error(done)
+  it('happy', { parallel: false }, function(fin) {
+    var s0 = Seneca({ tag: 's0' })
+      .test(fin)
       .listen(44440)
-      .add('a:1', function () { this.good({ x: 0 }) })
+      .add('a:1', function(msg, reply) {
+        reply({ x: 0 })
+      })
 
-      .ready(function () {
-        var s1 = Seneca(testopts).error(done)
-          .listen(44441)
-          .add('a:1', function () { this.good({ x: 1 }) })
+    var s1 = Seneca({ tag: 's1' })
+      .test(fin)
+      .listen(44441)
+      .add('a:1', function(msg, reply) {
+        reply({ x: 1 })
+      })
 
-          .ready(function () {
-            var c0 = Seneca(testopts).error(done)
-              .use('..')
-              .client({ type: 'balance', pin: 'a:1' })
-              .client({ port: 44440, pin: 'a:1' })
-              .client({ port: 44441, pin: 'a:1' })
-              .act('a:1', function (e, o) {
-                expect(o.x).to.equal(0)
+    var c0 = Seneca(testopts)
+      .error(fin)
+      .use('..')
+      .client({ type: 'balance', pin: 'a:1' })
+      .client({ port: 44440, pin: 'a:1' })
+      .client({ port: 44441, pin: 'a:1' })
 
-                c0.act('a:1', function (e, o) {
-                  expect(o.x).to.equal(1)
+    s0.ready(
+      s1.ready.bind(s1, function() {
+        c0
+          .gate()
+          .act('a:1', function(e, o) {
+            expect(o.x).to.equal(0)
+          })
+          .act('a:1', function(e, o) {
+            expect(o.x).to.equal(1)
+          })
+          .act('a:1', function(e, o) {
+            expect(o.x).to.equal(0)
 
-                  c0.act('a:1', function (e, o) {
-                    expect(o.x).to.equal(0)
-
-                    s0.close(function () {
-                      s1.close(function () {
-                        c0.close(function () {
-                          done()
-                        })
-                      })
-                    })
-                  })
-                })
-              })
+            s0.close(s1.close.bind(s1, c0.close.bind(c0, fin)))
           })
       })
+    )
   })
 
 
@@ -115,27 +119,26 @@ describe('#balance-client', function() {
 
 
         .ready( function () {
-          this.act({role: 'transport', type: 'balance', get: 'target-map'}, function(err,out){
-            expect(out[''][''].targets.length).equal(2)
-
-            this.act( 'a:1', function (e, o) {
+          this
+            .gate()
+            .act({role: 'transport', type: 'balance', get: 'target-map'},
+                 function(err,out){
+                   expect(out[''][''].targets.length).equal(2)
+                 })
+            .act( 'a:1', function (e, o) {
               expect(o.p).to.equal('47000')
-
-              this.act( 'a:1', function (e, o) {
-                expect(o.p).to.equal('47001')
-
-                this.act( 'a:1', function (e, o) {
-                  expect(o.p).to.equal('47000')
-
-                  this.act( 'a:1', function (e, o) {
-                    expect(o.p).to.equal('47001')
-
-                    fin()
-                  })
-                })
-              })
             })
-          })
+            .act( 'a:1', function (e, o) {
+              expect(o.p).to.equal('47001')
+            })
+            .act( 'a:1', function (e, o) {
+              expect(o.p).to.equal('47000')
+            })
+            .act( 'a:1', function (e, o) {
+              expect(o.p).to.equal('47001')
+
+              fin()
+            })
         })
     }))
   })
