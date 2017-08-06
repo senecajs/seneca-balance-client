@@ -1,6 +1,6 @@
 /*
   MIT License,
-  Copyright (c) 2015, Richard Rodger and other contributors.
+  Copyright (c) 2017, Richard Rodger and other contributors.
 */
 
 'use strict'
@@ -19,6 +19,35 @@ var testopts = {log: 'silent'}
 
 describe('#balance-client', function () {
 
+  it('nextgen-basic-consume', { parallel: false }, function (fin) {
+    var s0, c0
+
+    s0 = Seneca({tag: 's0', legacy: {transport: false}})
+      .test(fin)
+      .add('a:1', function (msg, reply) { reply({x: 1 + msg.x}) })
+      .add('a:2', function (msg, reply) { reply([msg.x, msg.y]) })
+      .listen(44460)
+    
+    c0 = Seneca({tag: 'c0', legacy: {transport: false}})
+      .test(fin)
+      .use('..')
+      .client({ type: 'balance', pin: 'a:*', model: 'consume' })
+      .client({ port: 44460, pin: 'a:*' })
+
+    s0.ready( c0.ready.bind(c0, function () {
+      c0.act('a:1,x:2', function(ignore, out) {
+        expect(out.x).equal(3)
+
+        c0.act('a:2,x:4,y:5', function(ignore, out) {
+          expect(out).equal([4,5])
+
+          s0.close( c0.close.bind(c0, fin))
+        })
+      })
+    }))
+  })
+
+  
   it('happy', { parallel: false }, function (done) {
     var s0 = Seneca(testopts).error(done)
       .listen(44440)

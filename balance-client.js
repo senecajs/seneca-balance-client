@@ -80,13 +80,14 @@ function balance_client (options) {
 
   var model = options.model
 
+  // TODO; replace these validations with optioner 
   if (null == model) {
     model = modelMap.consume
   }
   else if (typeof model === 'string') {
     model = modelMap[model]
   }
-
+  
   if (typeof model !== 'function') {
     throw new Error('model must be a string or function')
   }
