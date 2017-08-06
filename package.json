@@ -15,10 +15,11 @@
     "Dean McDonnell (https://github.com/mcdonnelldean)"
   ],
   "scripts": {
-    "test": "lab -v -P test -L -t 80 -I WebAssembly",
-    "coveralls": "lab -s -P test -r lcov  -I WebAssembly | coveralls",
-    "coverage": "lab -v -P test -L -t 80 -r html  -I WebAssembly > coverage.html",
-    "annotate": "docco balance-client.js -o docs/annotated"
+    "test": "lab -v -P test -L -t 80",
+    "coveralls": "lab -s -P test -r lcov | coveralls",
+    "coverage": "lab -v -P test -L -t 80 -r html > coverage.html",
+    "annotate": "docco balance-client.js -o docs/annotated",
+    "prettier": "prettier --write --no-semi --single-quote balance-client.js lib/*.js test/*.js"
   },
   "repository": {
     "type": "git",
@@ -33,7 +34,7 @@
     "client"
   ],
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=4.0.0"
   },
   "dependencies": {
     "eraro": "0.4.1",
@@ -41,11 +42,10 @@
     "lodash": "4.17.4"
   },
   "devDependencies": {
-    "code": "4.0.x",
+    "code": "4.1.x",
     "coveralls": "2.13.x",
     "docco": "0.7.x",
-    "lab": "11.0.x",
-    "pre-commit": "1.1.x",
+    "lab": "14.0.x",
     "seneca": "plugin"
   },
   "pre-commit": [
