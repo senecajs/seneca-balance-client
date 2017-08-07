@@ -46,7 +46,8 @@
     "coveralls": "2.13.x",
     "docco": "0.7.x",
     "lab": "14.0.x",
-    "seneca": "plugin"
+    "seneca": "plugin",
+    "prettier": "1.4.x"
   },
   "pre-commit": [
     "test"
