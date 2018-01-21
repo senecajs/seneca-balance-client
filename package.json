@@ -49,9 +49,6 @@
     "prettier": "^1.4.4",
     "seneca": "plugin"
   },
-  "pre-commit": [
-    "test"
-  ],
   "files": [
     "README.md",
     "LICENSE",
