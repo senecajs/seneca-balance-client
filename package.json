@@ -18,8 +18,7 @@
     "test": "lab -v -P test -L -t 80",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "coverage": "lab -v -P test -L -t 80 -r html > coverage.html",
-    "annotate": "docco balance-client.js -o docs/annotated",
-    "prettier": "prettier --write --no-semi --single-quote balance-client.js  test/*.js"
+    "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js"
   },
   "repository": {
     "type": "git",
@@ -34,20 +33,19 @@
     "client"
   ],
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=4"
   },
   "dependencies": {
-    "eraro": "0.4.1",
-    "jsonic": "0.3.0",
-    "lodash": "4.17.4"
+    "eraro": "1.0",
+    "jsonic": "0.3",
+    "lodash": "4.17"
   },
   "devDependencies": {
-    "code": "4.1.x",
-    "coveralls": "2.13.x",
-    "docco": "0.7.x",
-    "lab": "14.0.x",
-    "prettier": "^1.4.4",
-    "seneca": "plugin"
+    "code": "4",
+    "coveralls": "3",
+    "lab": "14",
+    "prettier": "1",
+    "seneca": "github:senecajs/seneca"
   },
   "files": [
     "README.md",

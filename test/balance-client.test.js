@@ -20,6 +20,86 @@ var expect = Code.expect
 var testopts = { log: 'silent' }
 
 describe('#balance-client', function() {
+  it('nextgen-ordering', { parallel: false }, function(fin) {
+    var s0, c0, s1, s2, c1
+
+    s0 = Seneca({ tag: 's0', legacy: { transport: false } })
+      .test(fin)
+      .add('a:1', function a1(msg, reply) {
+        reply({ x: 'a' })
+      })
+      .add('a:1,b:1', function a1b1(msg, reply) {
+        reply({x: 'ab'})
+      })
+      .add('c:1', function c1(msg, reply) {
+        reply({ x: 'c' })
+      })
+      .add('c:1,d:1', function c1d1(msg, reply) {
+        reply({x: 'cd'})
+      })
+      .listen(44470)
+
+    c0 = Seneca({ tag: 'c0', legacy: { transport: false } })
+      .test(fin)
+      .use('..')
+      .client({ type: 'balance', pin: 'a:1' })
+      .client({ port: 44470, pin: 'a:1' })
+      .client({ type: 'balance', pin: 'a:1,b:1' })
+      .client({ port: 44470, pin: 'a:1,b:1' })
+      .client({ type: 'balance', pin: 'c:1,d:1' })
+      .client({ port: 44470, pin: 'c:1,d:1' })
+      .client({ type: 'balance', pin: 'c:1' })
+      .client({ port: 44470, pin: 'c:1' })
+
+    s1 = Seneca({ tag: 's1', legacy: { transport: false } })
+      .test(fin)
+      .listen(47000)
+      .add('a:1', function a1(msg, reply) { reply({a:1}) })
+
+    s2 = Seneca({ tag: 's2', legacy: { transport: false } })
+      .test(fin)
+      .listen(47001)
+      .add('a:1,b:1', function a1b1(msg, reply) { reply({a:1,b:1}) })
+
+    c1 = Seneca({ tag: 'c1', legacy: { transport: false } })
+      .test(fin)
+      .use('..')
+      .client({ type: 'balance', pin: 'a:1' })
+      .client({ port: 47000, pin: 'a:1' })
+      .client({ type: 'balance', pin: 'a:1,b:1' })
+      .client({ port: 47001, pin: 'a:1,b:1' })
+
+
+    s0.ready(
+      c0.ready.bind(c0, function() {
+        var i = 0
+
+        this
+          .act('a:1', function(ignore,out) {expect(out).equal({x:'a'}); i++ })
+          .act('c:1', function(ignore,out) {expect(out).equal({x:'c'}); i++ })
+          .act('a:1,b:1', function(ignore,out) {expect(out).equal({x:'ab'}); i++ })
+          .act('c:1,d:1', function(ignore,out) {expect(out).equal({x:'cd'}); i++ })
+          .ready(function() {
+            expect(i).equal(4)
+        
+            s0.close(c0.close.bind(c0, s1s2c0))
+          })
+      }))
+
+    function s1s2c0() {
+      s1.ready(s2.ready.bind(s2, c1.ready.bind(c1, function() {
+        var i = 0
+        this
+          .act('a:1', function(ignore,out) {expect(out).equal({a:1}); i++ })
+          .act('a:1,b:1', function(ignore,out) {expect(out).equal({a:1,b:1}); i++ })
+          .ready(function() {
+            expect(i).equal(2)
+            s1.close(s2.close.bind(s2,c1.close.bind(c1,fin)))
+          })
+      })))
+    }
+  })
+
   it('nextgen-basic-consume', { parallel: false }, function(fin) {
     var s0, c0
 
@@ -61,7 +141,7 @@ describe('#balance-client', function() {
       tmp = { s0: 0, s1: 0 }
 
     s0 = Seneca({ id$: 's0', legacy: { transport: false } })
-      .test(fin, 'print')
+      .test(fin)
       .add('a:1', function a1(msg, reply) {
         reply({ x: 1 + msg.x })
       })
@@ -72,7 +152,7 @@ describe('#balance-client', function() {
       .listen(44470)
 
     s1 = Seneca({ id$: 's1', legacy: { transport: false } })
-      .test(fin, 'print')
+      .test(fin)
       .add('a:2', function a2s1(msg, reply) {
         tmp.s1++
         reply()
@@ -80,7 +160,7 @@ describe('#balance-client', function() {
       .listen(44471)
 
     c0 = Seneca({ id$: 'c0', legacy: { transport: false } })
-      .test(fin, 'print')
+      .test(fin)
       .use('..')
       .client({ type: 'balance', pin: 'a:1', model: 'consume' })
       .client({ port: 44470, pin: 'a:1' })
