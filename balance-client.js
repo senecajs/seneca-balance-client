@@ -1,13 +1,19 @@
-/*
-  MIT License,
-  Copyright (c) 2015-2017, Richard Rodger and other contributors.
-*/
+/* MIT License. Copyright (c) 2015-2018, Richard Rodger and other contributors. */
 
 'use strict'
 
-var _ = require('lodash')
-var Eraro = require('eraro')
-var Jsonic = require('jsonic')
+const _ = require('lodash')
+const Eraro = require('eraro')
+const Jsonic = require('jsonic')
+const Optioner = require('optioner')
+const Joi = Optioner.Joi
+
+const optioner = Optioner({
+  model: Joi.alternatives().try(Joi.string(), Joi.func()),
+  debug: {
+    client_updates: false
+  }
+})
 
 var error = Eraro({
   package: 'seneca',
@@ -19,15 +25,11 @@ var error = Eraro({
 
 module.exports = balance_client
 
-var global_target_map = {}
+// Not as bad as it looks - seneca.id is used at top level to isolate instances.
+// Need this here so that preload can reference it.
+const global_target_map = {}
 
-var option_defaults = {
-  debug: {
-    client_updates: false
-  }
-}
-
-var global_options = {}
+var global_options = { debug: {} }
 
 balance_client.preload = function() {
   var seneca = this
@@ -36,21 +38,20 @@ balance_client.preload = function() {
     transport: {
       balance: {
         makehandle: function(config) {
-          //console.log('MH',config)
+          global_target_map[seneca.id] = global_target_map[seneca.id] || {
+            id: seneca.id
+          }
+          var instance_map = global_target_map[seneca.id]
 
-          var instance_map = (global_target_map[seneca.id] = global_target_map[
-            seneca.id
-          ] || { id: seneca.id })
-
-          var target_map = (instance_map[config.pg] = instance_map[
-            config.pg
-          ] || { pg: config.pg, id: Math.random() })
+          instance_map[config.pg] = instance_map[config.pg] || {
+            pg: config.pg,
+            id: Math.random()
+          }
+          var target_map = instance_map[config.pg]
 
           target_map.pg = config.pg
 
           return function(pat, action) {
-            //console.log('MHF', pat, action)
-            //console.trace()
             add_target(seneca, target_map, config, pat, action)
           }
         }
@@ -71,26 +72,12 @@ function balance_client(options) {
     actor: consumeModel
   }
 
-  options = seneca.util.deepextend(option_defaults, options)
+  options = optioner.check(options)
 
   // hack to make add_target debug logging work
   // to be fixed when seneca plugin handling is rewritten to not need preload
-  global_options = seneca.util.deepextend(global_options, options)
+  Object.assign(global_options, options)
 
-  var model = options.model
-
-  // TODO; replace these validations with optioner
-  if (null == model) {
-    model = modelMap.consume
-  } else if (typeof model === 'string') {
-    model = modelMap[model]
-  }
-
-  if (typeof model !== 'function') {
-    throw new Error('model must be a string or function')
-  }
-
-  //console.log('BC adders',seneca.id,seneca.did,seneca.fixedargs)
   seneca.add(
     {
       role: 'transport',
@@ -148,9 +135,7 @@ function balance_client(options) {
       found = true
     }
 
-    // console.log(seneca.id, 'remove', patkey, action_id, found)
-
-    if (options.debug && options.debug.client_updates) {
+    if (options.debug.client_updates) {
       seneca.log.info('remove', patkey, action_id, found)
     }
   }
@@ -162,7 +147,6 @@ function balance_client(options) {
       msg.config.pg = this.util.pincanon(msg.config.pin || msg.config.pins)
     }
 
-    //console.log('AC',msg.config)
     this.client(msg.config)
     done()
   }
@@ -195,7 +179,6 @@ function balance_client(options) {
   }
 
   function hook_client(msg, clientdone) {
-    //console.log('HC in', msg)
     var seneca = this.root.delegate()
 
     var type = msg.type
@@ -208,8 +191,6 @@ function balance_client(options) {
 
     var model = client_options.model || consumeModel
     model = _.isFunction(model) ? model : modelMap[model] || consumeModel
-
-    //console.log('HC',pg,client_options)
 
     // legacy transport
     if (tu.make_client) {
@@ -300,8 +281,6 @@ function balance_client(options) {
 
 function add_target(seneca, target_map, config, pat, action) {
   var patkey = make_patkey(seneca, pat)
-  //console.log('AT', config, pat, patkey)
-
   var targetstate = target_map[patkey]
   var add = true
 
@@ -324,9 +303,7 @@ function add_target(seneca, target_map, config, pat, action) {
     })
   }
 
-  //console.log('AT', seneca.id, 'add', patkey, action.id, add)
-
-  if (global_options.debug && global_options.debug.client_updates) {
+  if (global_options.debug.client_updates) {
     seneca.log.info('add', patkey, action.id, add)
   }
 }
