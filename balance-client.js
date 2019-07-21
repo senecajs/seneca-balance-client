@@ -64,8 +64,10 @@ balance_client.preload = function() {
 
           target_map.pg = config.pg
 
-          return function(pat, action) {
-            add_target(seneca, target_map, config, pat, action)
+          //return function(pat, action) {
+          return function(actdef) {
+            var pat = actdef.client_pattern || actdef.pattern
+            add_target(seneca, target_map, config, pat, actdef.func)
           }
         }
       }
@@ -194,6 +196,8 @@ function balance_client(options) {
   function hook_client(msg, clientdone) {
     var seneca = this.root.delegate()
 
+    // console.log('BC', msg)
+    
     var type = msg.type
     var client_options = seneca.util.clean(_.extend({}, options[type], msg))
 
@@ -229,10 +233,15 @@ function balance_client(options) {
 
       tu.make_client(make_send, client_options, clientdone)
     } else {
+      // console.log('BC A ', pg)
+      
       var send_msg = function(msg, reply, meta) {
         msg = tu.externalize_msg(seneca, msg)
 
         var msg_meta = meta || msg.meta$
+
+        // console.log('BCM', this.util.clean(msg), pg, msg_meta.client_pattern, msg_meta.pattern)
+        // console.dir(target_map,{depth:null})
         
         var patkey = msg_meta.client_pattern || msg_meta.pattern
         var targetstate = target_map[patkey]

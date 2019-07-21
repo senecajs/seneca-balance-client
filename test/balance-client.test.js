@@ -499,8 +499,9 @@ describe('#balance-client', function() {
   })
 
   it('no-target-error', function(fin) {
-    var c0 = Seneca({ log: 'silent' })
-      .use(BalanceClient)
+    var c0 = Seneca()
+        .quiet()
+        .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .act('a:1', function(e) {
         expect(e).to.exist()
