@@ -3,18 +3,20 @@
 'use strict'
 
 const _ = require('lodash')
-const Eraro = require('eraro')
+//const Eraro = require('eraro')
 const Jsonic = require('jsonic')
-const Optioner = require('optioner')
-const Joi = Optioner.Joi
+// const Optioner = require('optioner')
+// const Joi = Optioner.Joi
 
+/*
 const optioner = Optioner({
   model: Joi.alternatives().try(Joi.string(), Joi.func()),
   debug: {
     client_updates: false
   }
 })
-
+*/
+/*
 var error = Eraro({
   package: 'seneca',
   msgmap: {
@@ -22,8 +24,19 @@ var error = Eraro({
     'no-current-target': 'No targets are currently active for message <%=msg%>'
   }
 })
+*/
 
 module.exports = balance_client
+balance_client.defaults = {
+  debug: {
+    client_updates: false
+  }
+}
+balance_client.errors = {
+  'no-target': 'No targets have been registered for message <%=msg%>',
+  'no-current-target': 'No targets are currently active for message <%=msg%>'
+}
+
 
 // Not as bad as it looks - seneca.id is used at top level to isolate instances.
 // Need this here so that preload can reference it.
@@ -72,7 +85,7 @@ function balance_client(options) {
     actor: consumeModel
   }
 
-  options = optioner.check(options)
+  // options = optioner.check(options)
 
   // hack to make add_target debug logging work
   // to be fixed when seneca plugin handling is rewritten to not need preload
@@ -210,7 +223,7 @@ function balance_client(options) {
           if (targetstate) {
             model(this, msg, targetstate, done, meta)
             return
-          } else return done(error('no-target', { msg: msg }))
+          } else return done(seneca.error('no-target', { msg: msg }))
         })
       }
 
@@ -219,13 +232,15 @@ function balance_client(options) {
       var send_msg = function(msg, reply, meta) {
         msg = tu.externalize_msg(seneca, msg)
 
-        var patkey = (meta || msg.meta$).pattern
+        var msg_meta = meta || msg.meta$
+        
+        var patkey = msg_meta.client_pattern || msg_meta.pattern
         var targetstate = target_map[patkey]
 
         if (targetstate) {
           model(this, msg, targetstate, reply, meta)
           return
-        } else return reply(error('no-target', { msg: msg }))
+        } else return reply(seneca.error('no-target', { msg: msg }))
       }
 
       return clientdone({
@@ -242,7 +257,7 @@ function balance_client(options) {
 
   function observeModel(seneca, msg, targetstate, done, meta) {
     if (0 === targetstate.targets.length) {
-      return done(error('no-current-target', { msg: msg }))
+      return done(seneca.error('no-current-target', { msg: msg }))
     }
 
     var first = true
@@ -271,7 +286,7 @@ function balance_client(options) {
     }
 
     if (!targets[index]) {
-      return done(error('no-current-target', { msg: msg }))
+      return done(seneca.error('no-current-target', { msg: msg }))
     }
 
     targets[index].action.call(seneca, msg, done, meta)

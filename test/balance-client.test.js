@@ -1,14 +1,15 @@
-/* MIT License. Copyright (c) 2017-2018, Richard Rodger and other contributors. */
-
+/* MIT License. Copyright (c) 2017-2019, Richard Rodger and other contributors. */
 'use strict'
 
-var Lab = require('lab')
+var Util = require('util')
+
+var Lab = require('@hapi/lab')
 var Code = require('code')
 var Seneca = require('seneca')
 
 var lab = (exports.lab = Lab.script())
 var describe = lab.describe
-var it = lab.it
+var it = make_it(lab)
 var expect = Code.expect
 
 var tmx = parseInt(process.env.TIMEOUT_MULTIPLIER || 1, 10)
@@ -170,7 +171,7 @@ describe('#balance-client', function() {
         tmp.s0++
         reply()
       })
-      .listen(44470)
+      .listen(44570)
 
     s1 = Seneca({ id$: 's1', legacy: { transport: false } })
       .test(fin)
@@ -178,16 +179,16 @@ describe('#balance-client', function() {
         tmp.s1++
         reply()
       })
-      .listen(44471)
+      .listen(44571)
 
     c0 = Seneca({ id$: 'c0', legacy: { transport: false } })
       .test(fin)
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1', model: 'consume' })
-      .client({ port: 44470, pin: 'a:1' })
+      .client({ port: 44570, pin: 'a:1' })
       .client({ type: 'balance', pin: 'a:2', model: 'observe' })
-      .client({ port: 44470, pin: 'a:2' })
-      .client({ port: 44471, pin: 'a:2' })
+      .client({ port: 44570, pin: 'a:2' })
+      .client({ port: 44571, pin: 'a:2' })
 
     s0.ready(
       s1.ready.bind(
@@ -266,8 +267,8 @@ describe('#balance-client', function() {
         })
     }
 
-    var s0 = make_server('s0', '47000', fin)
-    var s1 = make_server('s1', '47001', fin)
+    var s0 = make_server('s0', '47100', fin)
+    var s1 = make_server('s1', '47101', fin)
 
     s0.ready(
       s1.ready.bind(s1, function() {
@@ -277,8 +278,8 @@ describe('#balance-client', function() {
             debug: { client_updates: true }
           })
           .client({ type: 'balance' })
-          .client({ port: 47000 })
-          .client({ port: 47001 })
+          .client({ port: 47100 })
+          .client({ port: 47101 })
           .ready(function() {
             this.gate()
               .act(
@@ -288,16 +289,16 @@ describe('#balance-client', function() {
                 }
               )
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47000')
+                expect(o.p).to.equal('47100')
               })
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47001')
+                expect(o.p).to.equal('47101')
               })
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47000')
+                expect(o.p).to.equal('47100')
               })
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47001')
+                expect(o.p).to.equal('47101')
 
                 fin()
               })
@@ -310,15 +311,15 @@ describe('#balance-client', function() {
     var s0 = Seneca()
       .test(fin)
       .listen(44440)
-      .add('a:1', function() {
-        this.good({ x: 0 })
+      .add('a:1', function(msg, reply) {
+        reply({ x: 0 })
       })
 
     var s1 = Seneca()
       .test(fin)
       .listen(44441)
-      .add('a:1', function() {
-        this.good({ x: 1 })
+      .add('a:1', function(msg, reply) {
+        reply({ x: 1 })
       })
 
     var c0 = Seneca()
@@ -377,15 +378,15 @@ describe('#balance-client', function() {
     var s0 = Seneca()
       .test(fin)
       .listen(44440)
-      .add('a:1', function() {
-        this.good({ x: 0 })
+      .add('a:1', function(msg, reply) {
+        reply({ x: 0 })
       })
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
           .listen(44441)
-          .add('a:1', function() {
-            this.good({ x: 1 })
+          .add('a:1', function(msg, reply) {
+            reply({ x: 1 })
           })
           .ready(function() {
             var c0 = Seneca()
@@ -439,15 +440,15 @@ describe('#balance-client', function() {
     var s0 = Seneca()
       .test(fin)
       .listen(44440)
-      .add('a:1', function() {
-        this.good({ x: 0 })
+      .add('a:1', function(msg, reply) {
+        reply({ x: 0 })
       })
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
           .listen(44441)
-          .add('a:1', function() {
-            this.good({ x: 1 })
+          .add('a:1', function(msg, reply) {
+            reply({ x: 1 })
           })
           .ready(function() {
             var c0 = Seneca()
@@ -533,15 +534,15 @@ describe('#balance-client', function() {
     var s0 = Seneca()
       .test(fin)
       .listen(44440)
-      .add('a:1', function() {
-        this.good({ x: 0 })
+      .add('a:1', function(msg, reply) {
+        reply({ x: 0 })
       })
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
           .listen(44441)
-          .add('a:1', function() {
-            this.good({ x: 1 })
+          .add('a:1', function(msg, reply) {
+            reply({ x: 1 })
           })
           .ready(function() {
             var c0 = Seneca()
@@ -618,22 +619,22 @@ describe('#balance-client', function() {
       .test(fin)
       .listen(44440)
       .listen(44450)
-      .add('a:1', function() {
-        this.good({ x: 0 })
+      .add('a:1', function(msg, reply) {
+        reply({ x: 0 })
       })
-      .add('b:1', function() {
-        this.good({ y: 0 })
+      .add('b:1', function(msg, reply) {
+        reply({ y: 0 })
       })
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
           .listen(44441)
           .listen(44451)
-          .add('a:1', function() {
-            this.good({ x: 1 })
+          .add('a:1', function(msg, reply) {
+            reply({ x: 1 })
           })
-          .add('b:1', function() {
-            this.good({ y: 1 })
+          .add('b:1', function(msg, reply) {
+            reply({ y: 1 })
           })
           .ready(function() {
             var c0 = Seneca()
@@ -834,5 +835,24 @@ function close() {
         close_instance(index + 1)
       })
     }
+  }
+}
+
+
+
+function make_it(lab) {
+  return function it(name, opts, func) {
+    if ('function' === typeof opts) {
+      func = opts
+      opts = {}
+    }
+    
+    lab.it(
+      name,
+      opts,
+      Util.promisify(function(x, fin) {
+        func(fin)
+      })
+    )
   }
 }

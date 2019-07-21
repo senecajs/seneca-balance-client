@@ -18,7 +18,10 @@
     "test": "lab -v -P test -L -t 80 -I URL,URLSearchParams",
     "coveralls": "lab -s -P test -r lcov -I URL,URLSearchParams | coveralls",
     "coverage": "lab -v -P test -L -t 80 -r html > coverage.html",
-    "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js"
+    "prettier": "prettier --write --no-semi --single-quote *.js lib/*.js test/*.js",
+    "clean-npm": "rm -rf node_modules package-lock.json",
+    "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
+    "repo-publish": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && npm run prettier && npm test && npm run repo-tag && npm publish"
   },
   "repository": {
     "type": "git",
@@ -33,20 +36,18 @@
     "client"
   ],
   "engines": {
-    "node": ">=4"
+    "node": ">=8"
   },
   "dependencies": {
-    "eraro": "1.0",
-    "jsonic": "0.3",
-    "lodash": "4.17",
-    "optioner": "1.1"
+    "jsonic": "^0.3.1",
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "code": "4",
-    "coveralls": "3",
-    "lab": "14",
-    "prettier": "1",
-    "seneca": "github:senecajs/seneca"
+    "@hapi/lab": "^19.1.0",
+    "code": "^5.2.4",
+    "coveralls": "^3.0.5",
+    "prettier": "^1.18.2",
+    "seneca": "plugin"
   },
   "files": [
     "README.md",
