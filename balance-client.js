@@ -37,7 +37,6 @@ balance_client.errors = {
   'no-current-target': 'No targets are currently active for message <%=msg%>'
 }
 
-
 // Not as bad as it looks - seneca.id is used at top level to isolate instances.
 // Need this here so that preload can reference it.
 const global_target_map = {}
@@ -197,7 +196,7 @@ function balance_client(options) {
     var seneca = this.root.delegate()
 
     // console.log('BC', msg)
-    
+
     var type = msg.type
     var client_options = seneca.util.clean(_.extend({}, options[type], msg))
 
@@ -234,7 +233,7 @@ function balance_client(options) {
       tu.make_client(make_send, client_options, clientdone)
     } else {
       // console.log('BC A ', pg)
-      
+
       var send_msg = function(msg, reply, meta) {
         msg = tu.externalize_msg(seneca, msg)
 
@@ -242,7 +241,7 @@ function balance_client(options) {
 
         // console.log('BCM', this.util.clean(msg), pg, msg_meta.client_pattern, msg_meta.pattern)
         // console.dir(target_map,{depth:null})
-        
+
         var patkey = msg_meta.client_pattern || msg_meta.pattern
         var targetstate = target_map[patkey]
 

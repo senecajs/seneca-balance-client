@@ -194,8 +194,7 @@ describe('#balance-client', function() {
       s1.ready.bind(
         s1,
         c0.ready.bind(c0, function() {
-          c0
-            .gate()
+          c0.gate()
             .act('a:1,x:2', function(ignore, out) {
               expect(out.x).equal(3)
             })
@@ -236,8 +235,7 @@ describe('#balance-client', function() {
 
     s0.ready(
       s1.ready.bind(s1, function() {
-        c0
-          .gate()
+        c0.gate()
           .act('a:1', function(e, o) {
             expect(o.x).to.equal(0)
           })
@@ -420,7 +418,7 @@ describe('#balance-client', function() {
                                   c0.act('a:1', function(e, o) {
                                     expect(o.x).to.equal(1)
 
-                                    close(fin,55,s0,s1,c0)
+                                    close(fin, 55, s0, s1, c0)
                                   })
                                 })
                               }
@@ -482,7 +480,7 @@ describe('#balance-client', function() {
                                   c0.act('a:1', function(e, o) {
                                     expect(o.x).to.equal(0)
 
-                                    close(fin,55,s0,s1,c0)
+                                    close(fin, 55, s0, s1, c0)
                                   })
                                 })
                               }
@@ -500,13 +498,13 @@ describe('#balance-client', function() {
 
   it('no-target-error', function(fin) {
     var c0 = Seneca()
-        .quiet()
-        .use(BalanceClient)
+      .quiet()
+      .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .act('a:1', function(e) {
         expect(e).to.exist()
         expect(e.code).to.equal('no-target')
-        close(fin,55,c0)
+        close(fin, 55, c0)
       })
   })
 
@@ -524,7 +522,7 @@ describe('#balance-client', function() {
             this.act('a:1', function(e) {
               expect(e).to.exist()
               expect(e.code).to.equal('no-current-target')
-              close(fin,55,c0)
+              close(fin, 55, c0)
             })
           }
         )
@@ -561,7 +559,7 @@ describe('#balance-client', function() {
                   c0.act('a:1', function(e, o) {
                     expect(o.x).to.equal(0)
 
-                    close(fin,55,s0,s1,c0)
+                    close(fin, 55, s0, s1, c0)
                   })
                 })
               })
@@ -610,7 +608,7 @@ describe('#balance-client', function() {
 
     function check() {
       if (1 === t.x && 1 === t.y) {
-        close(fin,55,s0,s1,c0)
+        close(fin, 55, s0, s1, c0)
       }
     }
   })
@@ -665,7 +663,7 @@ describe('#balance-client', function() {
                         c0.act('b:1', function(e, o) {
                           expect(0).to.equal(o.y)
 
-                          close(fin,55,s0,s1,c0)
+                          close(fin, 55, s0, s1, c0)
                         })
                       })
                     })
@@ -713,7 +711,7 @@ describe('#balance-client', function() {
             expect(t.x).to.equal(1)
             expect(t.y).to.equal(1)
 
-            close(fin,55,s0,s1,c0)
+            close(fin, 55, s0, s1, c0)
           }, 111)
         })
       )
@@ -839,15 +837,13 @@ function close() {
   }
 }
 
-
-
 function make_it(lab) {
   return function it(name, opts, func) {
     if ('function' === typeof opts) {
       func = opts
       opts = {}
     }
-    
+
     lab.it(
       name,
       opts,
