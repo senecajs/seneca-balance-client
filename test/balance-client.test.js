@@ -4,7 +4,7 @@
 var Util = require('util')
 
 var Lab = require('@hapi/lab')
-var Code = require('code')
+var Code = require('@hapi/code')
 var Seneca = require('seneca')
 
 var lab = (exports.lab = Lab.script())

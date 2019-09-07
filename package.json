@@ -1,6 +1,6 @@
 {
   "name": "seneca-balance-client",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Seneca client-side load balancing transport.",
   "main": "balance-client.js",
   "license": "MIT",
@@ -43,9 +43,9 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@hapi/lab": "^19.1.0",
-    "code": "^5.2.4",
-    "coveralls": "^3.0.5",
+    "@hapi/code": "^6.0.0",
+    "@hapi/lab": "^20.2.2",
+    "coveralls": "^3.0.6",
     "prettier": "^1.18.2",
     "seneca": "plugin"
   },
