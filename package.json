@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "jsonic": "^0.3.1",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "@hapi/code": "^8.0.1",
