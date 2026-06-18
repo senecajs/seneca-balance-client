@@ -1,5 +1,5 @@
 {
-  "name": "seneca-balance-client",
+  "name": "@seneca/balance-client",
   "version": "1.2.0",
   "description": "Seneca client-side load balancing transport.",
   "main": "balance-client.js",
