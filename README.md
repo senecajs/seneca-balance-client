@@ -1,7 +1,37 @@
 ![Seneca](http://senecajs.org/files/assets/seneca-logo.png)
 > A [Seneca.js][] plugin
 
-# @seneca/balance-client
+> A [Seneca.js][] transport plugin that provides various client-side
+load balancing strategies, and enables dynamic reconfiguration of
+client message routing.
+
+# seneca-balance-client
+[![npm version][npm-badge]][npm-url]
+[![Build Status][travis-badge]][travis-url]
+[![Coverage Status][coveralls-badge]][coveralls-url]
+[![Dependency Status][david-badge]][david-url]
+[![Gitter][gitter-badge]][gitter-url]
+
+| ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
+|---|---|
+
+## Description
+
+This module is a plugin for the Seneca framework. It provides a
+transport client that load balances outbound messages on a per-pattern basis.
+
+If you're using this module, and need help, you can:
+
+- Post a [github issue][],
+- Tweet to [@senecajs][],
+- Ask on the [Gitter][gitter-url].
+
+If you are new to Seneca in general, please take a look at
+[Senecajs.org][]. We have everything from tutorials to sample apps to
+help get you up and running quickly.
+
+### Seneca compatibility
+Supports Seneca versions **3.x** and above.
 
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 |---|---|
