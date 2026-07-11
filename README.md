@@ -15,7 +15,7 @@ client message routing.
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 |---|---|
 
-## Description
+### Description
 
 This module is a plugin for the Seneca framework. It provides a
 transport client that load balances outbound messages on a per-pattern basis.
