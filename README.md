@@ -5,7 +5,7 @@
 load balancing strategies, and enables dynamic reconfiguration of
 client message routing.
 
-# seneca-balance-client
+# @seneca/balance-client
 [![npm version][npm-badge]][npm-url]
 [![Build Status][travis-badge]][travis-url]
 [![Coverage Status][coveralls-badge]][coveralls-url]
