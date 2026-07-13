@@ -117,7 +117,35 @@ var c0 = Seneca({tag: 'c0'})
   .client({ port: 44441, pin: 'a:1' })
 ```
 
-You can also provide your own balancing model by providing a function with signature `(seneca, msg, targetstate, done)` as the value of the `model` setting.
+
+
+You can also provide your own balancing model by providing a function
+with signature `(seneca, msg, targetstate, done)` as the value of the
+`model` setting:
+
+```js
+...
+    .client({
+      type: 'balance',
+      pin: 'a:1',
+      model: function (seneca, msg, targetstate, done) {
+        if (0 === targetstate.targets.length) {
+          return done( new Error('No targets') )
+        }
+
+        // select a random target
+        var index = Math.floor(Math.random() * targetstate.targets.length)
+        targetstate.targets[index].action.call( seneca, msg, done)
+      }
+    })
+...
+```
+
+The `targetstate` object provides you with the list of currently
+available targets. Review the internal implementations of the
+`observeModel` and the `consumeModel` in
+[balance-client.js](https://github.com/senecajs/seneca-balance-client/blob/master/balance-client.js)
+for a starting point to write your own model.
 
 ## Contributing
 
