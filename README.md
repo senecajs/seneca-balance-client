@@ -1,5 +1,5 @@
 ![Seneca](http://senecajs.org/files/assets/seneca-logo.png)
-> A [Seneca.js](http://senecajs.org) transport plugin that provides various client-side load balancing strategies, and enables dynamic reconfiguration of client message routing.
+> A [Seneca.js](http://senecajs.org) plugin
 
 # @seneca/balance-client
 
@@ -9,6 +9,8 @@
 
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 |---|---|
+
+A transport plugin that provides various client-side load balancing strategies, and enables dynamic reconfiguration of client message routing.
 
 ## Install
 
