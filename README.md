@@ -6,11 +6,8 @@ load balancing strategies, and enables dynamic reconfiguration of
 client message routing.
 
 # @seneca/balance-client
-[![npm version][npm-badge]][npm-url]
-[![Build Status][travis-badge]][travis-url]
-[![Coverage Status][coveralls-badge]][coveralls-url]
-[![Dependency Status][david-badge]][david-url]
-[![Gitter][gitter-badge]][gitter-url]
+[![build](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml/badge.svg)](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml)
+[![Known Vulnerabilities](https://snyk.io/test/github/senecajs/seneca-balance-client/badge.svg)](https://snyk.io/test/github/senecajs/seneca-balance-client)
 
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 |---|---|
@@ -85,7 +82,6 @@ require('seneca')()
 
   })
 
-
 // $ node client.js --seneca.log=type:act
 ```
 
@@ -134,26 +130,11 @@ npm run test
 
 See [seneca-transport](http://github.com/rjrodger/seneca-transport) for more information about message transports.
 
-[![npm version][npm-badge]][npm-url]
-[![Build Status][travis-badge]][travis-url]
-[![Coverage Status][coveralls-badge]][coveralls-url]
-[![Dependency Status][david-badge]][david-url]
-[![Gitter][gitter-badge]][gitter-url]
 [Senecajs.org][]. We have everything from tutorials to sample apps to
 [balance-client.js](https://github.com/senecajs/seneca-balance-client/blob/master/balance-client.js)
 [MIT]: ./LICENSE
-[npm-badge]: https://img.shields.io/npm/v/seneca-balance-client.svg
-[npm-url]: https://npmjs.com/package/seneca-balance-client
-[coveralls-badge]:https://coveralls.io/repos/senecajs/seneca-balance-client/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/senecajs/seneca-balance-client?branch=master
-[david-badge]: https://david-dm.org/senecajs/seneca-balance-client.svg
-[david-url]: https://david-dm.org/senecajs/seneca-balance-client
 [Senecajs org]: https://github.com/senecajs/
 [Seneca.js]: https://www.npmjs.com/package/seneca
 [@senecajs]: http://twitter.com/senecajs
 [senecajs.org]: http://senecajs.org/
-[travis-badge]: https://travis-ci.org/senecajs/seneca-balance-client.svg
-[travis-url]: https://travis-ci.org/senecajs/seneca-balance-client
-[gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
-[gitter-url]: https://gitter.im/senecajs/seneca
 [github issue]: https://github.com/senecajs/seneca-balance-client/issues
