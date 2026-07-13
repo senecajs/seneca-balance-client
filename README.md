@@ -10,6 +10,8 @@
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 |---|---|
 
+A transport plugin that provides various client-side load balancing strategies, and enables dynamic reconfiguration of client message routing.
+
 ## Install
 
 ```sh
@@ -69,8 +71,6 @@ The client will balance requests over both servers using round-robin.
 See [test/](test/) for more usage examples.
 
 ## Motivation
-
-A transport plugin that provides various client-side load balancing strategies, and enables dynamic reconfiguration of client message routing.
 
 This module is a plugin for the Seneca framework. It provides a transport client that load balances outbound messages on a per-pattern basis.
 
