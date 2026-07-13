@@ -3,6 +3,7 @@
 
 # @seneca/balance-client
 
+[![npm version](https://img.shields.io/npm/v/seneca-balance-client.svg)](https://npmjs.com/package/seneca-balance-client)
 [![build](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml/badge.svg)](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/senecajs/seneca-balance-client/badge.svg?branch=master&service=github)](https://coveralls.io/github/senecajs/seneca-balance-client?branch=master)
 [![Known Vulnerabilities](https://snyk.io/test/github/senecajs/seneca-balance-client/badge.svg)](https://snyk.io/test/github/senecajs/seneca-balance-client)
