@@ -1,42 +1,22 @@
 ![Seneca](http://senecajs.org/files/assets/seneca-logo.png)
+> A [Seneca.js](http://senecajs.org) plugin
 
-> A [Seneca.js][] transport plugin that provides various client-side
-load balancing strategies, and enables dynamic reconfiguration of
-client message routing.
+# @seneca/balance-client
 
-# seneca-balance-client
-[![npm version][npm-badge]][npm-url]
-[![Build Status][travis-badge]][travis-url]
-[![Coverage Status][coveralls-badge]][coveralls-url]
-[![Dependency Status][david-badge]][david-url]
-[![Gitter][gitter-badge]][gitter-url]
+[![npm version](https://img.shields.io/npm/v/seneca-balance-client.svg)](https://npmjs.com/package/seneca-balance-client)
+[![build](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml/badge.svg)](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml)
+[![Coverage Status](https://coveralls.io/repos/senecajs/seneca-balance-client/badge.svg?branch=master&service=github)](https://coveralls.io/github/senecajs/seneca-balance-client?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/senecajs/seneca-balance-client/badge.svg)](https://snyk.io/test/github/senecajs/seneca-balance-client)
 
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 |---|---|
 
-## Description
-
-This module is a plugin for the Seneca framework. It provides a
-transport client that load balances outbound messages on a per-pattern basis.
-
-If you're using this module, and need help, you can:
-
-- Post a [github issue][],
-- Tweet to [@senecajs][],
-- Ask on the [Gitter][gitter-url].
-
-If you are new to Seneca in general, please take a look at
-[Senecajs.org][]. We have everything from tutorials to sample apps to
-help get you up and running quickly.
-
-### Seneca compatibility
-Supports Seneca versions **3.x** and above.
-
+A transport plugin that provides various client-side load balancing strategies, and enables dynamic reconfiguration of client message routing.
 
 ## Install
 
 ```sh
-npm install seneca-balance-client
+npm install @seneca/balance-client
 ```
 
 And in your code:
@@ -82,17 +62,32 @@ require('seneca')()
 
   })
 
-
 // $ node client.js --seneca.log=type:act
 ```
 
-The client will balance requests over both servers using
-round-robin. As there is no _pin_ in the `.client` configuration, this
-will apply to all non-local actions. Add a _pin_ to restrict the
-action patterns to which this applies - make sure to use the same
-_pin_ on both client and server to avoid ambiguity.
+The client will balance requests over both servers using round-robin.
 
-## Usage
+## More Examples
+
+See [test/](test/) for more usage examples.
+
+## Motivation
+
+This module is a plugin for the Seneca framework. It provides a transport client that load balances outbound messages on a per-pattern basis.
+
+Supports Seneca versions **3.x** and above.
+
+## Support
+
+If you're using this module and need help, you can:
+
+- Post a [github issue](https://github.com/senecajs/seneca-balance-client/issues)
+- Tweet to [@senecajs](http://twitter.com/senecajs)
+- Ask on the [Gitter](https://gitter.im/senecajs/seneca)
+
+## API
+
+### Usage
 
 The plugin provides two balancing models:
 
@@ -123,16 +118,9 @@ var c0 = Seneca({tag: 'c0'})
   .client({ type: 'balance', pin: 'a:1', model: 'observe' })
   .client({ port: 44440, pin: 'a:1' })
   .client({ port: 44441, pin: 'a:1' })
-
-
-s0.ready( s1.ready.bind(s1, c0.ready.bind(c0, function () {
-  c0.act('a:1,x:y')
-
-  // wait a little bit to avoid shutting down in mid flow
-  setTimeout(
-    s0.close.bind( s0, s1.close.bind(s1, c0.close.bind(c0))), 111 )
-})))
 ```
+
+
 
 You can also provide your own balancing model by providing a function
 with signature `(seneca, msg, targetstate, done)` as the value of the
@@ -157,42 +145,24 @@ with signature `(seneca, msg, targetstate, done)` as the value of the
 ```
 
 The `targetstate` object provides you with the list of currently
-available targets.  Review the internal implementations of the
+available targets. Review the internal implementations of the
 `observeModel` and the `consumeModel` in
 [balance-client.js](https://github.com/senecajs/seneca-balance-client/blob/master/balance-client.js)
 for a starting point to write your own model.
 
-
 ## Contributing
 
-The [Senecajs org][] encourages open participation. If you feel you
-can help in any way, be it with documentation, examples, extra
-testing, or new features please get in touch.
+The [Senecajs org](https://github.com/senecajs/) encourages open participation. If you feel you can help in any way, be it with documentation, examples, extra testing, or new features please get in touch.
 
-## Test
-To run tests, simply use npm:
+### Running tests
 
 ```sh
 npm run test
 ```
 
-## License
-Copyright (c) 2010-2016, Richard Rodger and other contributors.
-Licensed under [MIT][].
+## Background
 
-[MIT]: ./LICENSE
-[npm-badge]: https://img.shields.io/npm/v/seneca-balance-client.svg
-[npm-url]: https://npmjs.com/package/seneca-balance-client
-[coveralls-badge]:https://coveralls.io/repos/senecajs/seneca-balance-client/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/senecajs/seneca-balance-client?branch=master
-[david-badge]: https://david-dm.org/senecajs/seneca-balance-client.svg
-[david-url]: https://david-dm.org/senecajs/seneca-balance-client
-[Senecajs org]: https://github.com/senecajs/
-[Seneca.js]: https://www.npmjs.com/package/seneca
-[@senecajs]: http://twitter.com/senecajs
-[senecajs.org]: http://senecajs.org/
-[travis-badge]: https://travis-ci.org/senecajs/seneca-balance-client.svg
-[travis-url]: https://travis-ci.org/senecajs/seneca-balance-client
-[gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
-[gitter-url]: https://gitter.im/senecajs/seneca
-[github issue]: https://github.com/senecajs/seneca-balance-client/issues
+Copyright (c) 2010-2016, Richard Rodger and other contributors.
+Licensed under [MIT](./LICENSE).
+
+Part of the [Senecajs org](https://github.com/senecajs/).
