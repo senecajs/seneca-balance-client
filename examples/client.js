@@ -1,16 +1,25 @@
-require('seneca')()
-  .use('..')
+// Start the two servers first (see server.js), then:
+// $ node examples/client.js
+// The four messages are shared between the two servers, round-robin.
 
-  .client( {type: 'balance'} )
-  .client( {port: 47000} )
-  .client( {port: 47001} )
+require('seneca')({ log: 'warn' })
+  .use('seneca-transport')
+  .use(require('..')) // in your project: .use('@seneca/balance-client')
 
-  .ready( function () {
+  .client({ type: 'balance', pin: 'a:1' })
+  .client({ port: 47000, pin: 'a:1' })
+  .client({ port: 47001, pin: 'a:1' })
 
-    for ( var i = 0; i < 4; i++ ) {
-      this.act( 'a:1,x:1', console.log )
+  .ready(function () {
+    var seneca = this
+    var count = 0
+
+    for (var i = 0; i < 4; i++) {
+      seneca.act('a:1', { x: i }, function (err, out) {
+        console.log(err ? err.message : out)
+
+        // Close after the last reply, whether it was a result or an error.
+        if (4 === ++count) seneca.close()
+      })
     }
-
   })
-
-// $ node client.js --seneca.log=type:act

@@ -1,34 +1,21 @@
-/* MIT License. Copyright (c) 2015-2018, Richard Rodger and other contributors. */
+/* MIT License. Copyright (c) 2015-2026, Richard Rodger and other contributors. */
 
 'use strict'
 
-const _ = require('lodash')
-//const Eraro = require('eraro')
-const Jsonic = require('jsonic')
-// const Optioner = require('optioner')
-// const Joi = Optioner.Joi
-
-/*
-const optioner = Optioner({
-  model: Joi.alternatives().try(Joi.string(), Joi.func()),
-  debug: {
-    client_updates: false
-  }
-})
-*/
-/*
-var error = Eraro({
-  package: 'seneca',
-  msgmap: {
-    'no-target': 'No targets have been registered for message <%=msg%>',
-    'no-current-target': 'No targets are currently active for message <%=msg%>'
-  }
-})
-*/
-
 module.exports = balance_client
 balance_client.defaults = {
+  // Default balancing model for the balance clients of this instance:
+  // 'consume' (round-robin) or 'observe' (the aliases 'actor' and 'publish'
+  // also work). A `model` in the client configuration, which may also be a
+  // model function, takes precedence.
+  model: 'consume',
+
+  // Default configuration merged into every balance client configuration
+  // (type:balance); keys given to seneca.client() take precedence.
+  balance: {},
+
   debug: {
+    // Log each target added to or removed from a balance client.
     client_updates: false
   }
 }
@@ -41,10 +28,17 @@ balance_client.errors = {
 // Need this here so that preload can reference it.
 const global_target_map = {}
 
-var global_options = { debug: {} }
+// Plugin options per instance (by seneca.id), for the target handle that
+// preload creates.
+const global_options_map = {}
 
-balance_client.preload = function() {
+balance_client.preload = function(plugin) {
   var seneca = this
+
+  // Targets can be added before the plugin is defined (for example
+  // .use(BalanceClient).client(...)), so start with the options as given;
+  // the definition replaces them with the resolved options.
+  global_options_map[seneca.id] = (plugin && plugin.options) || {}
 
   seneca.options({
     transport: {
@@ -63,7 +57,6 @@ balance_client.preload = function() {
 
           target_map.pg = config.pg
 
-          //return function(pat, action) {
           return function(actdef) {
             var pat = actdef.client_pattern || actdef.pattern
             add_target(seneca, target_map, config, pat, actdef.func)
@@ -76,7 +69,8 @@ balance_client.preload = function() {
 
 function balance_client(options) {
   var seneca = this
-  var tu = seneca.export('transport/utils')
+  var tu = seneca.export('transport/utils') || {}
+  var legacy_transport = seneca.version.startsWith('3.')
   var modelMap = {
     observe: observeModel,
     consume: consumeModel,
@@ -86,11 +80,8 @@ function balance_client(options) {
     actor: consumeModel
   }
 
-  // options = optioner.check(options)
-
-  // hack to make add_target debug logging work
-  // to be fixed when seneca plugin handling is rewritten to not need preload
-  Object.assign(global_options, options)
+  // Make the options available to add_target, which preload references.
+  global_options_map[seneca.id] = options
 
   seneca.add(
     {
@@ -127,6 +118,18 @@ function balance_client(options) {
     },
     get_client_map
   )
+
+  // Seneca 3 closes via role:seneca,cmd:close; Seneca 4 via sys:seneca,cmd:close.
+  // Release the target map of this instance, then continue the close chain.
+  var close_pattern = legacy_transport
+    ? 'role:seneca,cmd:close'
+    : 'sys:seneca,cmd:close'
+
+  seneca.add(close_pattern, function(close_msg, done) {
+    delete global_target_map[seneca.id]
+    delete global_options_map[seneca.id]
+    this.prior(close_msg, done)
+  })
 
   function remove_target(target_map, pat, config) {
     var action_id = config.id || seneca.util.pattern(config)
@@ -177,9 +180,9 @@ function balance_client(options) {
     var instance_map = global_target_map[seneca.id] || {}
     var target_map = instance_map[msg.config.pg] || {}
 
-    var pins = msg.config.pin ? [msg.config.pin] : msg.config.pins
+    var pins = msg.config.pin ? [msg.config.pin] : msg.config.pins || []
 
-    _.each(pins, function(pin) {
+    pins.forEach(function(pin) {
       remove_target(target_map, pin, msg.config)
     })
 
@@ -195,21 +198,24 @@ function balance_client(options) {
   function hook_client(msg, clientdone) {
     var seneca = this.root.delegate()
 
-    // console.log('BC', msg)
-
     var type = msg.type
-    var client_options = seneca.util.clean(_.extend({}, options[type], msg))
+    var client_options = seneca.util.clean(
+      Object.assign({}, options[type], msg)
+    )
 
     var pg = this.util.pincanon(client_options.pin || client_options.pins)
 
     var instance_map = global_target_map[seneca.id] || {}
     var target_map = instance_map[pg] || {}
 
-    var model = client_options.model || consumeModel
-    model = _.isFunction(model) ? model : modelMap[model] || consumeModel
+    var model = client_options.model || options.model || consumeModel
+    model =
+      'function' === typeof model ? model : modelMap[model] || consumeModel
 
-    // legacy transport
-    if (tu.make_client) {
+    // Seneca 3 with the legacy transport (the default in 3.x) provides
+    // make_client; Seneca 4 always uses the core transport protocol below,
+    // whichever utils object seneca-transport exported.
+    if (legacy_transport && tu.make_client) {
       var make_send = function(spec, topic, send_done) {
         seneca.log.debug(
           'client',
@@ -232,15 +238,8 @@ function balance_client(options) {
 
       tu.make_client(make_send, client_options, clientdone)
     } else {
-      // console.log('BC A ', pg)
-
       var send_msg = function(msg, reply, meta) {
-        msg = tu.externalize_msg(seneca, msg)
-
         var msg_meta = meta || msg.meta$
-
-        // console.log('BCM', this.util.clean(msg), pg, msg_meta.client_pattern, msg_meta.pattern)
-        // console.dir(target_map,{depth:null})
 
         var patkey = msg_meta.client_pattern || msg_meta.pattern
         var targetstate = target_map[patkey]
@@ -256,11 +255,6 @@ function balance_client(options) {
         send: send_msg
       })
     }
-
-    seneca.add('role:seneca,cmd:close', function(close_msg, done) {
-      var closer = this
-      closer.prior(close_msg, done)
-    })
   }
 
   function observeModel(seneca, msg, targetstate, done, meta) {
@@ -326,20 +320,22 @@ function add_target(seneca, target_map, config, pat, action) {
     })
   }
 
-  if (global_options.debug.client_updates) {
+  var options = global_options_map[seneca.id]
+  if (options && options.debug && options.debug.client_updates) {
     seneca.log.info('add', patkey, action.id, add)
   }
 }
 
 function make_patkey(seneca, pat) {
-  if (_.isString(pat)) {
-    pat = Jsonic(pat)
+  if ('string' === typeof pat) {
+    // The empty string is the catch-all pattern; Jsonic parses it as undefined.
+    pat = '' === pat.trim() ? {} : seneca.util.Jsonic(pat)
   }
 
-  var keys = _.keys(seneca.util.clean(pat)).sort()
+  var keys = Object.keys(seneca.util.clean(pat)).sort()
   var cleanpat = {}
 
-  _.each(keys, function(k) {
+  keys.forEach(function(k) {
     cleanpat[k] = pat[k]
   })
 
