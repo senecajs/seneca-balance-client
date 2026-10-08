@@ -1,26 +1,23 @@
-/* MIT License. Copyright (c) 2017-2019, Richard Rodger and other contributors. */
+/* MIT License. Copyright (c) 2017-2026, Richard Rodger and other contributors. */
 'use strict'
 
-var Util = require('util')
+const { describe, it: node_it } = require('node:test')
+const Assert = require('node:assert')
 
-var Lab = require('@hapi/lab')
-var Code = require('@hapi/code')
-var Seneca = require('seneca')
+const Seneca = require('seneca')
 
-var lab = (exports.lab = Lab.script())
-var describe = lab.describe
-var it = make_it(lab)
-var expect = Code.expect
+const tmx = parseInt(process.env.TIMEOUT_MULTIPLIER || 1, 10)
+const it = make_it()
 
-var tmx = parseInt(process.env.TIMEOUT_MULTIPLIER || 1, 10)
-var BalanceClient = require('..')
+const BalanceClient = require('..')
 
 describe('#balance-client', function() {
-  it('nextgen-ordering', { parallel: false }, function(fin) {
+  it('nextgen-ordering', function(fin) {
     var s0, c0, s1, s2, c1
 
-    s0 = Seneca({ tag: 's0', legacy: { transport: false } })
+    s0 = Seneca({ tag: 's0' })
       .test(fin)
+      .use('seneca-transport')
       .add('a:1', function a1(msg, reply) {
         reply({ x: 'a' })
       })
@@ -35,8 +32,9 @@ describe('#balance-client', function() {
       })
       .listen(44470)
 
-    c0 = Seneca({ tag: 'c0', legacy: { transport: false } })
+    c0 = Seneca({ tag: 'c0' })
       .test(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 44470, pin: 'a:1' })
@@ -47,22 +45,25 @@ describe('#balance-client', function() {
       .client({ type: 'balance', pin: 'c:1' })
       .client({ port: 44470, pin: 'c:1' })
 
-    s1 = Seneca({ tag: 's1', legacy: { transport: false } })
+    s1 = Seneca({ tag: 's1' })
       .test(fin)
+      .use('seneca-transport')
       .listen(47000)
       .add('a:1', function a1(msg, reply) {
         reply({ a: 1 })
       })
 
-    s2 = Seneca({ tag: 's2', legacy: { transport: false } })
+    s2 = Seneca({ tag: 's2' })
       .test(fin)
+      .use('seneca-transport')
       .listen(47001)
       .add('a:1,b:1', function a1b1(msg, reply) {
         reply({ a: 1, b: 1 })
       })
 
-    c1 = Seneca({ tag: 'c1', legacy: { transport: false } })
+    c1 = Seneca({ tag: 'c1' })
       .test(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 47000, pin: 'a:1' })
@@ -74,23 +75,23 @@ describe('#balance-client', function() {
         var i = 0
 
         this.act('a:1', function(ignore, out) {
-          expect(out).equal({ x: 'a' })
+          Assert.deepStrictEqual(out, { x: 'a' })
           i++
         })
           .act('c:1', function(ignore, out) {
-            expect(out).equal({ x: 'c' })
+            Assert.deepStrictEqual(out, { x: 'c' })
             i++
           })
           .act('a:1,b:1', function(ignore, out) {
-            expect(out).equal({ x: 'ab' })
+            Assert.deepStrictEqual(out, { x: 'ab' })
             i++
           })
           .act('c:1,d:1', function(ignore, out) {
-            expect(out).equal({ x: 'cd' })
+            Assert.deepStrictEqual(out, { x: 'cd' })
             i++
           })
           .ready(function() {
-            expect(i).equal(4)
+            Assert.strictEqual(i, 4)
 
             close(s1s2c0, 55, s0, c0)
           })
@@ -104,15 +105,15 @@ describe('#balance-client', function() {
           c1.ready.bind(c1, function() {
             var i = 0
             this.act('a:1', function(ignore, out) {
-              expect(out).equal({ a: 1 })
+              Assert.deepStrictEqual(out, { a: 1 })
               i++
             })
               .act('a:1,b:1', function(ignore, out) {
-                expect(out).equal({ a: 1, b: 1 })
+                Assert.deepStrictEqual(out, { a: 1, b: 1 })
                 i++
               })
               .ready(function() {
-                expect(i).equal(2)
+                Assert.strictEqual(i, 2)
 
                 close(fin, 55, s1, s2, c1)
               })
@@ -122,11 +123,12 @@ describe('#balance-client', function() {
     }
   })
 
-  it('nextgen-basic-consume', { parallel: false }, function(fin) {
+  it('nextgen-basic-consume', function(fin) {
     var s0, c0
 
-    s0 = Seneca({ tag: 's0', legacy: { transport: false } })
+    s0 = Seneca({ tag: 's0' })
       .test(fin)
+      .use('seneca-transport')
       .add('a:1', function(msg, reply) {
         reply({ x: 1 + msg.x })
       })
@@ -135,8 +137,9 @@ describe('#balance-client', function() {
       })
       .listen(44460)
 
-    c0 = Seneca({ tag: 'c0', legacy: { transport: false } })
+    c0 = Seneca({ tag: 'c0' })
       .test(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:*', model: 'consume' })
       .client({ port: 44460, pin: 'a:*' })
@@ -144,10 +147,10 @@ describe('#balance-client', function() {
     s0.ready(
       c0.ready.bind(c0, function() {
         c0.act('a:1,x:2', function(ignore, out) {
-          expect(out.x).equal(3)
+          Assert.strictEqual(out.x, 3)
 
           c0.act('a:2,x:4,y:5', function(ignore, out) {
-            expect(out).equal([4, 5])
+            Assert.deepStrictEqual(out, [4, 5])
 
             close(fin, 55, s0, c0)
           })
@@ -156,14 +159,15 @@ describe('#balance-client', function() {
     )
   })
 
-  it('nextgen-multi-model', { parallel: false }, function(fin) {
+  it('nextgen-multi-model', function(fin) {
     var s0,
       s1,
       c0,
       tmp = { s0: 0, s1: 0 }
 
-    s0 = Seneca({ id$: 's0', legacy: { transport: false } })
+    s0 = Seneca({ id$: 's0' })
       .test(fin)
+      .use('seneca-transport')
       .add('a:1', function a1(msg, reply) {
         reply({ x: 1 + msg.x })
       })
@@ -173,16 +177,18 @@ describe('#balance-client', function() {
       })
       .listen(44570)
 
-    s1 = Seneca({ id$: 's1', legacy: { transport: false } })
+    s1 = Seneca({ id$: 's1' })
       .test(fin)
+      .use('seneca-transport')
       .add('a:2', function a2s1(msg, reply) {
         tmp.s1++
         reply()
       })
       .listen(44571)
 
-    c0 = Seneca({ id$: 'c0', legacy: { transport: false } })
+    c0 = Seneca({ id$: 'c0' })
       .test(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1', model: 'consume' })
       .client({ port: 44570, pin: 'a:1' })
@@ -196,13 +202,13 @@ describe('#balance-client', function() {
         c0.ready.bind(c0, function() {
           c0.gate()
             .act('a:1,x:2', function(ignore, out) {
-              expect(out.x).equal(3)
+              Assert.strictEqual(out.x, 3)
             })
             .act('a:2')
             .act('a:2')
             .ready(function() {
-              expect(tmp.s0).equal(2)
-              expect(tmp.s1).equal(2)
+              Assert.strictEqual(tmp.s0, 2)
+              Assert.strictEqual(tmp.s1, 2)
 
               close(fin, 55, s0, s1, c0)
             })
@@ -211,9 +217,10 @@ describe('#balance-client', function() {
     )
   })
 
-  it('happy', { parallel: false }, function(fin) {
+  it('happy', function(fin) {
     var s0 = Seneca({ tag: 's0' })
       .test(fin)
+      .use('seneca-transport')
       .listen(44440)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
@@ -221,6 +228,7 @@ describe('#balance-client', function() {
 
     var s1 = Seneca({ tag: 's1' })
       .test(fin)
+      .use('seneca-transport')
       .listen(44441)
       .add('a:1', function(msg, reply) {
         reply({ x: 1 })
@@ -228,6 +236,7 @@ describe('#balance-client', function() {
 
     var c0 = Seneca()
       .test(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 44440, pin: 'a:1' })
@@ -237,13 +246,13 @@ describe('#balance-client', function() {
       s1.ready.bind(s1, function() {
         c0.gate()
           .act('a:1', function(e, o) {
-            expect(o.x).to.equal(0)
+            Assert.strictEqual(o.x, 0)
           })
           .act('a:1', function(e, o) {
-            expect(o.x).to.equal(1)
+            Assert.strictEqual(o.x, 1)
           })
           .act('a:1', function(e, o) {
-            expect(o.x).to.equal(0)
+            Assert.strictEqual(o.x, 0)
 
             close(fin, 55, s0, s1, c0)
           })
@@ -251,10 +260,11 @@ describe('#balance-client', function() {
     )
   })
 
-  it('readme', { parallel: false, timeout: 3333 }, function(fin) {
+  it('readme', { timeout: 3333 }, function(fin) {
     function make_server(tag, port, fin) {
-      return Seneca({ id$: tag, legacy: { transport: false } })
+      return Seneca({ id$: tag })
         .test(fin)
+        .use('seneca-transport')
         .listen({
           port: function() {
             return port
@@ -270,8 +280,9 @@ describe('#balance-client', function() {
 
     s0.ready(
       s1.ready.bind(s1, function() {
-        Seneca({ id$: 'c0', legacy: { transport: false } })
+        var c0 = Seneca({ id$: 'c0' })
           .test(fin)
+          .use('seneca-transport')
           .use(BalanceClient, {
             debug: { client_updates: true }
           })
@@ -283,45 +294,52 @@ describe('#balance-client', function() {
               .act(
                 { role: 'transport', type: 'balance', get: 'target-map' },
                 function(err, out) {
-                  expect(out[''][''].targets.length).equal(2)
+                  Assert.strictEqual(out[''][''].targets.length, 2)
                 }
               )
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47100')
+                Assert.strictEqual(o.p, '47100')
               })
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47101')
+                Assert.strictEqual(o.p, '47101')
               })
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47100')
+                Assert.strictEqual(o.p, '47100')
               })
               .act('a:1', function(e, o) {
-                expect(o.p).to.equal('47101')
+                Assert.strictEqual(o.p, '47101')
 
-                fin()
+                // Close the client before the services. With seneca 4.0.0 and
+                // seneca-transport 8.3, closing an instance that has catch-all
+                // clients sends role:seneca,cmd:close through them, which
+                // fails if the services are already closed.
+                close(fin, 55, c0, s0, s1)
               })
           })
       })
     )
   })
 
-  it('add-remove', { parallel: false }, function(fin) {
+  it('add-remove', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .listen(44440)
+      .use('seneca-transport')
+      .listen(44480)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
       })
 
     var s1 = Seneca()
       .test(fin)
-      .listen(44441)
+      .use('seneca-transport')
+      .listen(44481)
       .add('a:1', function(msg, reply) {
         reply({ x: 1 })
       })
 
     var c0 = Seneca()
       .test(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
 
@@ -329,30 +347,30 @@ describe('#balance-client', function() {
       s1.ready(function() {
         c0.act(
           'role:transport,type:balance,add:client',
-          { config: { port: 44440, pin: 'a:1' } },
+          { config: { port: 44480, pin: 'a:1' } },
           function() {
             c0.act('a:1', function(e, o) {
-              expect(o.x).to.equal(0)
+              Assert.strictEqual(o.x, 0)
 
               c0.act(
                 'role:transport,type:balance,add:client',
-                { config: { port: 44441, pin: 'a:1' } },
+                { config: { port: 44481, pin: 'a:1' } },
                 function() {
                   c0.act('a:1', function(e, o) {
-                    expect(o.x).to.equal(0)
+                    Assert.strictEqual(o.x, 0)
 
                     c0.act('a:1', function(e, o) {
-                      expect(o.x).to.equal(1)
+                      Assert.strictEqual(o.x, 1)
 
                       c0.act(
                         'role:transport,type:balance,remove:client',
-                        { config: { port: 44441, pin: 'a:1' } },
+                        { config: { port: 44481, pin: 'a:1' } },
                         function() {
                           c0.act('a:1', function(e, o) {
-                            expect(o.x).to.equal(0)
+                            Assert.strictEqual(o.x, 0)
 
                             c0.act('a:1', function(e, o) {
-                              expect(o.x).to.equal(0)
+                              Assert.strictEqual(o.x, 0)
 
                               close(fin, 55, s0, s1, c0)
                             })
@@ -370,53 +388,54 @@ describe('#balance-client', function() {
     })
   })
 
-  it("doesn't remove when no match is found", { parallel: false }, function(
-    fin
-  ) {
+  it("doesn't remove when no match is found", function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .listen(44440)
+      .use('seneca-transport')
+      .listen(44490)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
       })
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .listen(44441)
+          .use('seneca-transport')
+          .listen(44491)
           .add('a:1', function(msg, reply) {
             reply({ x: 1 })
           })
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
+              .use('seneca-transport')
               .use(BalanceClient)
               .client({ type: 'balance', pin: 'a:1' })
               .act(
                 'role:transport,type:balance,add:client',
-                { config: { port: 44440, pin: 'a:1' } },
+                { config: { port: 44490, pin: 'a:1' } },
                 function() {
                   c0.act('a:1', function(e, o) {
-                    expect(o.x).to.equal(0)
+                    Assert.strictEqual(o.x, 0)
 
                     c0.act(
                       'role:transport,type:balance,add:client',
-                      { config: { port: 44441, pin: 'a:1' } },
+                      { config: { port: 44491, pin: 'a:1' } },
                       function() {
                         c0.act('a:1', function(e, o) {
-                          expect(o.x).to.equal(0)
+                          Assert.strictEqual(o.x, 0)
 
                           c0.act('a:1', function(e, o) {
-                            expect(o.x).to.equal(1)
+                            Assert.strictEqual(o.x, 1)
 
                             c0.act(
                               'role:transport,type:balance,remove:client',
-                              { config: { port: 44440, pin: 'a:5' } },
+                              { config: { port: 44490, pin: 'a:5' } },
                               function() {
                                 c0.act('a:1', function(e, o) {
-                                  expect(o.x).to.equal(0)
+                                  Assert.strictEqual(o.x, 0)
 
                                   c0.act('a:1', function(e, o) {
-                                    expect(o.x).to.equal(1)
+                                    Assert.strictEqual(o.x, 1)
 
                                     close(fin, 55, s0, s1, c0)
                                   })
@@ -437,48 +456,51 @@ describe('#balance-client', function() {
   it('uses a custom id when adding and removing clients', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .listen(44440)
+      .use('seneca-transport')
+      .listen(44500)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
       })
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .listen(44441)
+          .use('seneca-transport')
+          .listen(44501)
           .add('a:1', function(msg, reply) {
             reply({ x: 1 })
           })
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
+              .use('seneca-transport')
               .use(BalanceClient)
               .client({ type: 'balance', pin: 'a:1' })
               .act(
                 'role:transport,type:balance,add:client',
-                { config: { port: 44440, pin: 'a:1', id: 'foo' } },
+                { config: { port: 44500, pin: 'a:1', id: 'foo' } },
                 function() {
                   c0.act('a:1', function(e, o) {
-                    expect(o.x).to.equal(0)
+                    Assert.strictEqual(o.x, 0)
 
                     c0.act(
                       'role:transport,type:balance,add:client',
-                      { config: { port: 44441, pin: 'a:1', id: 'bar' } },
+                      { config: { port: 44501, pin: 'a:1', id: 'bar' } },
                       function() {
                         c0.act('a:1', function(e, o) {
-                          expect(o.x).to.equal(0)
+                          Assert.strictEqual(o.x, 0)
 
                           c0.act('a:1', function(e, o) {
-                            expect(o.x).to.equal(1)
+                            Assert.strictEqual(o.x, 1)
 
                             c0.act(
                               'role:transport,type:balance,remove:client',
                               { config: { id: 'bar', pin: 'a:1' } },
                               function() {
                                 c0.act('a:1', function(e, o) {
-                                  expect(o.x).to.equal(0)
+                                  Assert.strictEqual(o.x, 0)
 
                                   c0.act('a:1', function(e, o) {
-                                    expect(o.x).to.equal(0)
+                                    Assert.strictEqual(o.x, 0)
 
                                     close(fin, 55, s0, s1, c0)
                                   })
@@ -502,14 +524,15 @@ describe('#balance-client', function() {
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .act('a:1', function(e) {
-        expect(e).to.exist()
-        expect(e.code).to.equal('no-target')
+        Assert.ok(e)
+        Assert.strictEqual(e.code, 'no-target')
         close(fin, 55, c0)
       })
   })
 
   it('no-current-target-error', function(fin) {
     var c0 = Seneca({ log: 'silent' })
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ pin: 'a:1', port: 55555 })
@@ -518,10 +541,10 @@ describe('#balance-client', function() {
           'role:transport,type:balance,remove:client',
           { config: { pin: 'a:1', port: 55555 } },
           function(e) {
-            expect(e).to.not.exist()
+            Assert.ok(!e)
             this.act('a:1', function(e) {
-              expect(e).to.exist()
-              expect(e.code).to.equal('no-current-target')
+              Assert.ok(e)
+              Assert.strictEqual(e.code, 'no-current-target')
               close(fin, 55, c0)
             })
           }
@@ -529,35 +552,38 @@ describe('#balance-client', function() {
       })
   })
 
-  it('supports model option', { parallel: false }, function(fin) {
+  it('supports model option', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .listen(44440)
+      .use('seneca-transport')
+      .listen(44510)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
       })
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .listen(44441)
+          .use('seneca-transport')
+          .listen(44511)
           .add('a:1', function(msg, reply) {
             reply({ x: 1 })
           })
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
+              .use('seneca-transport')
               .use(BalanceClient, { model: 'consume' })
               .client({ type: 'balance', pin: 'a:1' })
-              .client({ port: 44440, pin: 'a:1' })
-              .client({ port: 44441, pin: 'a:1' })
+              .client({ port: 44510, pin: 'a:1' })
+              .client({ port: 44511, pin: 'a:1' })
               .act('a:1', function(e, o) {
-                expect(o.x).to.equal(0)
+                Assert.strictEqual(o.x, 0)
 
                 c0.act('a:1', function(e, o) {
-                  expect(o.x).to.equal(1)
+                  Assert.strictEqual(o.x, 1)
 
                   c0.act('a:1', function(e, o) {
-                    expect(o.x).to.equal(0)
+                    Assert.strictEqual(o.x, 0)
 
                     close(fin, 55, s0, s1, c0)
                   })
@@ -567,7 +593,7 @@ describe('#balance-client', function() {
       })
   })
 
-  it('supports observe model option', { parallel: false }, function(fin) {
+  it('supports observe model option', function(fin) {
     var t = {}
     var s0
     var s1
@@ -575,7 +601,8 @@ describe('#balance-client', function() {
 
     s0 = Seneca()
       .test(fin)
-      .listen(44440)
+      .use('seneca-transport')
+      .listen(44520)
       .add('a:1', function(m, d) {
         t.x = 1
         d()
@@ -584,7 +611,8 @@ describe('#balance-client', function() {
 
     s1 = Seneca()
       .test(fin)
-      .listen(44441)
+      .use('seneca-transport')
+      .listen(44521)
       .add('a:1', function(m, d) {
         t.y = 1
         d()
@@ -593,10 +621,11 @@ describe('#balance-client', function() {
 
     c0 = Seneca({ tag: 'c0', log: 'silent', debug: { short_logs: true } })
       .error(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1', model: 'observe' })
-      .client({ port: 44440, pin: 'a:1' })
-      .client({ port: 44441, pin: 'a:1' })
+      .client({ port: 44520, pin: 'a:1' })
+      .client({ port: 44521, pin: 'a:1' })
 
     s0.ready(function() {
       s1.ready(function() {
@@ -613,11 +642,12 @@ describe('#balance-client', function() {
     }
   })
 
-  it('multiple-client-calls', { parallel: false }, function(fin) {
+  it('multiple-client-calls', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .listen(44440)
-      .listen(44450)
+      .use('seneca-transport')
+      .listen(44530)
+      .listen(44540)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
       })
@@ -627,8 +657,9 @@ describe('#balance-client', function() {
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .listen(44441)
-          .listen(44451)
+          .use('seneca-transport')
+          .listen(44531)
+          .listen(44541)
           .add('a:1', function(msg, reply) {
             reply({ x: 1 })
           })
@@ -638,30 +669,31 @@ describe('#balance-client', function() {
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
+              .use('seneca-transport')
               .use(BalanceClient)
               .client({ type: 'balance', pin: 'a:1' })
-              .client({ port: 44440, pin: 'a:1' })
-              .client({ port: 44441, pin: 'a:1' })
+              .client({ port: 44530, pin: 'a:1' })
+              .client({ port: 44531, pin: 'a:1' })
               .client({ type: 'balance', pin: 'b:1' })
-              .client({ port: 44450, pin: 'b:1' })
-              .client({ port: 44451, pin: 'b:1' })
+              .client({ port: 44540, pin: 'b:1' })
+              .client({ port: 44541, pin: 'b:1' })
               .act('a:1', function(e, o) {
-                expect(0).to.equal(o.x)
+                Assert.strictEqual(0, o.x)
 
                 c0.act('a:1', function(e, o) {
-                  expect(1).to.equal(o.x)
+                  Assert.strictEqual(1, o.x)
 
                   c0.act('a:1', function(e, o) {
-                    expect(0).to.equal(o.x)
+                    Assert.strictEqual(0, o.x)
 
                     c0.act('b:1', function(e, o) {
-                      expect(0).to.equal(o.y)
+                      Assert.strictEqual(0, o.y)
 
                       c0.act('b:1', function(e, o) {
-                        expect(1).to.equal(o.y)
+                        Assert.strictEqual(1, o.y)
 
                         c0.act('b:1', function(e, o) {
-                          expect(0).to.equal(o.y)
+                          Assert.strictEqual(0, o.y)
 
                           close(fin, 55, s0, s1, c0)
                         })
@@ -674,13 +706,14 @@ describe('#balance-client', function() {
       })
   })
 
-  it('fire-and-forget', { parallel: false }, function(fin) {
+  it('fire-and-forget', function(fin) {
     var t = {}
     var s0, s1, c0
 
     s0 = Seneca({ tag: 's0', log: 'silent', debug: { short_logs: true } })
       .error(fin)
-      .listen(44440)
+      .use('seneca-transport')
+      .listen(44550)
       .add('a:1', function(m, d) {
         t.x = 1
         d()
@@ -688,7 +721,8 @@ describe('#balance-client', function() {
 
     s1 = Seneca({ tag: 's1', log: 'silent', debug: { short_logs: true } })
       .error(fin)
-      .listen(44441)
+      .use('seneca-transport')
+      .listen(44551)
       .add('a:1', function(m, d) {
         t.y = 1
         d()
@@ -696,10 +730,11 @@ describe('#balance-client', function() {
 
     c0 = Seneca({ tag: 'c0', log: 'silent', debug: { short_logs: true } })
       .error(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1', model: 'observe' })
-      .client({ port: 44440, pin: 'a:1' })
-      .client({ port: 44441, pin: 'a:1' })
+      .client({ port: 44550, pin: 'a:1' })
+      .client({ port: 44551, pin: 'a:1' })
 
     s0.ready(
       s1.ready.bind(
@@ -708,8 +743,8 @@ describe('#balance-client', function() {
           c0.act('a:1')
 
           setTimeout(function() {
-            expect(t.x).to.equal(1)
-            expect(t.y).to.equal(1)
+            Assert.strictEqual(t.x, 1)
+            Assert.strictEqual(t.y, 1)
 
             close(fin, 55, s0, s1, c0)
           }, 111)
@@ -718,13 +753,14 @@ describe('#balance-client', function() {
     )
   })
 
-  it('multiple-clients', { parallel: false }, function(fin) {
+  it('multiple-clients', function(fin) {
     var t = { x: 0, y: 0 }
     var s0, s1, c0, c1, c2
 
     s0 = Seneca({ tag: 's0', log: 'silent', debug: { short_logs: true } })
       .error(fin)
-      .listen(44450)
+      .use('seneca-transport')
+      .listen(44560)
       .add('a:1', function(m, d) {
         t.x++
         d(null, { x: t.x })
@@ -732,7 +768,8 @@ describe('#balance-client', function() {
 
     s1 = Seneca({ tag: 's1', log: 'silent', debug: { short_logs: true } })
       .error(fin)
-      .listen(44451)
+      .use('seneca-transport')
+      .listen(44561)
       .add('a:1', function(m, d) {
         t.y++
         d(null, { y: t.y })
@@ -740,24 +777,27 @@ describe('#balance-client', function() {
 
     c0 = Seneca({ tag: 'c0', log: 'silent', debug: { short_logs: true } })
       .error(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
-      .client({ port: 44450, pin: 'a:1' })
-      .client({ port: 44451, pin: 'a:1' })
+      .client({ port: 44560, pin: 'a:1' })
+      .client({ port: 44561, pin: 'a:1' })
 
     c1 = Seneca({ tag: 'c1', log: 'silent', debug: { short_logs: true } })
       .error(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
-      .client({ port: 44450, pin: 'a:1' })
-      .client({ port: 44451, pin: 'a:1' })
+      .client({ port: 44560, pin: 'a:1' })
+      .client({ port: 44561, pin: 'a:1' })
 
     c2 = Seneca({ tag: 'c2', log: 'silent', debug: { short_logs: true } })
       .error(fin)
+      .use('seneca-transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
-      .client({ port: 44450, pin: 'a:1' })
-      .client({ port: 44451, pin: 'a:1' })
+      .client({ port: 44560, pin: 'a:1' })
+      .client({ port: 44561, pin: 'a:1' })
 
     s0.ready(
       s1.ready.bind(
@@ -790,9 +830,9 @@ describe('#balance-client', function() {
             function(err, c2map) {
               if (err) return fin(err)
 
-              expect(c0map['a:1'].targets.length).to.equal(2)
-              expect(c1map['a:1'].targets.length).to.equal(2)
-              expect(c2map['a:1'].targets.length).to.equal(2)
+              Assert.strictEqual(c0map['a:1'].targets.length, 2)
+              Assert.strictEqual(c1map['a:1'].targets.length, 2)
+              Assert.strictEqual(c2map['a:1'].targets.length, 2)
 
               do_test()
             }
@@ -803,22 +843,23 @@ describe('#balance-client', function() {
 
     function do_test() {
       c0.act('a:1', function(e, o) {
-        expect(o.x).to.equal(1)
-        expect(t.x).to.equal(1)
-        expect(t.y).to.equal(0)
+        Assert.strictEqual(o.x, 1)
+        Assert.strictEqual(t.x, 1)
+        Assert.strictEqual(t.y, 0)
 
         c0.act('a:1', function(e, o) {
-          expect(o.y).to.equal(1)
-          expect(t.x).to.equal(1)
-          expect(t.y).to.equal(1)
+          Assert.strictEqual(o.y, 1)
+          Assert.strictEqual(t.x, 1)
+          Assert.strictEqual(t.y, 1)
 
-          fin()
+          close(fin, 55, s0, s1, c0, c1, c2)
         })
       })
     }
   })
 })
 
+// Close each instance in turn, then wait a little before finishing.
 function close() {
   var fin = arguments[0]
   var delay = arguments[1]
@@ -837,19 +878,22 @@ function close() {
   }
 }
 
-function make_it(lab) {
+// Adapts the `function (fin)` test signature (call fin() when done, fin(err)
+// on failure) to the node:test runner. node:test has no default per-test
+// timeout; lab used 2 seconds.
+function make_it() {
+  var default_timeout = 11111 * tmx
+
   return function it(name, opts, func) {
     if ('function' === typeof opts) {
       func = opts
       opts = {}
     }
 
-    lab.it(
-      name,
-      opts,
-      Util.promisify(function(x, fin) {
-        func(fin)
-      })
-    )
+    var options = Object.assign({ timeout: default_timeout }, opts)
+
+    node_it(name, options, function(t, fin) {
+      func(fin)
+    })
   }
 }
