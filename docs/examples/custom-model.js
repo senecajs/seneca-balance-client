@@ -36,7 +36,7 @@ function failover(seneca, msg, targetstate, done, meta) {
 
 function greetService(port) {
   return Seneca({ tag: 'greet-' + port, log: 'warn' })
-    .use('seneca-transport')
+    .use('@seneca/transport')
     .add(pin, function (msg, reply) {
       reply({ hello: msg.name, port: port })
     })
@@ -48,7 +48,7 @@ async function main() {
   const services = [greetService(8261)]
 
   const client = Seneca({ tag: 'client', log: 'warn' })
-    .use('seneca-transport')
+    .use('@seneca/transport')
     .use(BalanceClient)
     .client({ type: 'balance', pin, model: failover })
     .client({ id: 'down', type: 'web', port: 8269, pin })
@@ -60,21 +60,12 @@ async function main() {
     console.log(await client.post(pin, { name: 'Ann' }))
   } finally {
     await client.close()
-    for (const service of services) await stop(service)
+    for (const service of services) await service.close()
   }
 }
 
 function ready(instance) {
   return new Promise((resolve) => instance.ready(resolve))
-}
-
-// seneca-transport 8.3 closes its listener in a role:seneca,cmd:close hook.
-// Seneca 4.0.0 runs that hook in close(); 4.0.0-rc5 does not, so run it here.
-async function stop(service) {
-  if (service.version.startsWith('4.0.0-rc')) {
-    await service.post('role:seneca,cmd:close')
-  }
-  await service.close()
 }
 
 main().catch((err) => {

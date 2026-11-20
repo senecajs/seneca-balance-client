@@ -19,10 +19,10 @@ messages of wrapped local actions) and hands the message to the model.
 When no target has ever been registered for the pattern, it replies with
 the error [`no-target`](errors.md).
 
-On Seneca 3, when seneca-transport is loaded (the default in 3.x), the
-hook builds the client with seneca-transport's older `make_client`
-instead. Messages are balanced the same way, except that wrapped local
-actions more specific than the pin fail with `no-target`.
+Versions 1.x of the plugin, on Seneca 3 with seneca-transport loaded
+(the default in 3.x), build the client with seneca-transport's older
+`make_client` instead. There wrapped local actions more specific than
+the pin fail with `no-target`.
 
 ## `role:transport,type:balance,add:client`
 
@@ -93,7 +93,7 @@ Treat the reply as read only.
 
 ## Close hook
 
-The plugin adds a prior to the close action, `sys:seneca,cmd:close` on
-Seneca 4 and `role:seneca,cmd:close` on Seneca 3. It drops the target
-map and the options of the instance, then continues the close chain.
+The plugin adds a prior to the close action, `sys:seneca,cmd:close`.
+It drops the target map and the options of the instance, then continues
+the close chain.
 See [Shut down cleanly](../how-to/shut-down-cleanly.md).

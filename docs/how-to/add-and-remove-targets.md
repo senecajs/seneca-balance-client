@@ -11,7 +11,7 @@ complete program is
 const pin = 'role:greet,cmd:hello'
 
 const client = Seneca({ tag: 'client', log: 'warn' })
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .use('@seneca/balance-client')
   .client({ type: 'balance', pin })
 ```

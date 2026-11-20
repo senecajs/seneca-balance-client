@@ -14,7 +14,7 @@ Seneca({ plugin: { balance_client: { model: 'observe' } } })
 
 Seneca 4 validates the options against the defaults: an unknown key,
 or a value of the wrong type, fails plugin loading with the error code
-`invalid_plugin_option`. Seneca 3.38 does not reject unknown keys.
+`invalid_plugin_option`.
 
 ## Plugin options
 
@@ -64,7 +64,7 @@ balance client, which has no address of its own.
 ## Target configuration
 
 A target is an ordinary transport client, for example `type: 'web'` or
-`type: 'tcp'` from seneca-transport, created with `seneca.client` or with
+`type: 'tcp'` from `@seneca/transport`, created with `seneca.client` or with
 the [`add:client`](messages.md#roletransporttypebalanceaddclient) action.
 Two keys matter to the balance client:
 

@@ -11,7 +11,7 @@ place use an ordinary client:
 
 ```js
 const client = Seneca({ tag: 'client', log: 'warn' })
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .use(BalanceClient)
 
   // hello is balanced over both services ...
@@ -85,7 +85,6 @@ seneca
   .client({ type: 'web', port: 8262 })
 ```
 
-The pin group and the pattern of this client are the empty string. With
-seneca 4.0.0 and seneca-transport 8.3, closing an instance that has
-catch-all clients sends a close message to a remote service; see
-[Shut down cleanly](shut-down-cleanly.md#catch-all-clients-on-seneca-400).
+The pin group and the pattern of this client are the empty string.
+Closing an instance that has catch-all clients sends nothing to the
+targets; see [Shut down cleanly](shut-down-cleanly.md).

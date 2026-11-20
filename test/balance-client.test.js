@@ -309,10 +309,7 @@ describe('#balance-client', function() {
               .act('a:1', function(e, o) {
                 Assert.strictEqual(o.p, '47101')
 
-                // Close the client before the services. With seneca 4.0.0 and
-                // seneca-transport 8.3, closing an instance that has catch-all
-                // clients sends role:seneca,cmd:close through them, which
-                // fails if the services are already closed.
+                // Close the client before the services.
                 close(fin, 55, c0, s0, s1)
               })
           })

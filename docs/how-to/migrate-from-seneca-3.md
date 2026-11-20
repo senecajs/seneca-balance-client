@@ -1,21 +1,20 @@
 # Migrate from Seneca 3
 
 How to move code that uses the balance client from Seneca 3 to Seneca 4.
-The plugin supports both versions; the changes are in your setup code,
-options and tests. The differences are explained in
+From version 2.0.0, `@seneca/balance-client` supports Seneca 4 only;
+on Seneca 3, keep `seneca-balance-client@1`. The changes are in your
+setup code, options and tests. The differences are explained in
 [Seneca 3 and Seneca 4](../explanation/seneca-3-and-4.md).
 
 ## 1. Load a transport plugin
 
-Seneca 4 has no built in network transport. Add seneca-transport to
-every process that listens and to every process that has web or tcp
-targets:
+Seneca 4 has no built in network transport. Add `@seneca/transport`
+(the Seneca 4 version of seneca-transport) to every process that
+listens and to every process that has web or tcp targets:
 
 ```sh
-npm install --legacy-peer-deps seneca-transport
+npm install seneca@^4 @seneca/transport @seneca/balance-client
 ```
-
-(`--legacy-peer-deps` is needed while Seneca 4 is a prerelease.)
 
 ```js
 // Seneca 3
@@ -26,7 +25,7 @@ require('seneca')()
 
 // Seneca 4
 require('seneca')()
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .use('@seneca/balance-client')
   .client({ type: 'balance', pin: 'a:1' })
   .client({ port: 47000, pin: 'a:1' })
@@ -55,7 +54,7 @@ anything else fails option validation. Delete the option.
 * `balance` (defaults merged into every balance client configuration)
   works as before.
 * Options set in the instance options belong under
-  `plugin.balance_client`, on both versions:
+  `plugin.balance_client`, as before:
 
 ```js
 Seneca({ plugin: { balance_client: { debug: { client_updates: true } } } })
@@ -64,42 +63,45 @@ Seneca({ plugin: { balance_client: { debug: { client_updates: true } } } })
 ## 4. Use the new package name
 
 Versions up to 1.2.0 were published as `seneca-balance-client`; from
-the next version the package is `@seneca/balance-client`:
+2.0.0 the package is `@seneca/balance-client`:
 
 ```js
 seneca.use('@seneca/balance-client')
 ```
 
-`seneca.use('balance-client')` keeps working where the old package is
-installed. The plugin registers as `balance_client` either way.
+Seneca 4 resolves the short name `seneca.use('balance-client')` to
+`@seneca/balance-client` before `seneca-balance-client`, but load the
+plugin by its full name, and remove `seneca-balance-client` from your
+dependencies. The plugin registers as `balance_client` either way.
 
 ## 5. Check `override` with more specific local actions
 
 On Seneca 3 with its default (legacy) transport, a balance client created
 with `override: true` cannot serve wrapped local actions that are more
-specific than its pin (they fail with `no-target`). On Seneca 4 they are
+specific than its pin (they fail with `no-target`). From 2.0.0 they are
 balanced. See [Override local actions](override-local-actions.md).
 
 ## 6. Shutdown
 
 Nothing to change in your code: `seneca.close()` runs the plugin's close
-step on both versions. Two known issues of the current prerelease
-combination are described in [Shut down cleanly](shut-down-cleanly.md):
-services on 4.0.0-rc5 keep listening after `close()`, and catch-all
-clients on 4.0.0 forward the close message.
+step, now on `sys:seneca,cmd:close`. With `@seneca/transport` 9 it also
+closes the listeners and connections. See
+[Shut down cleanly](shut-down-cleanly.md).
 
 ## 7. Tests
 
-* Load `seneca-transport` in every test instance that listens or has
+* Load `@seneca/transport` in every test instance that listens or has
   web or tcp targets, and give every listener its own port.
 * Close every instance, clients before services.
 * Errors keep their codes: `err.code` is `no-target` or
-  `no-current-target` on both versions.
+  `no-current-target`, as before.
+* Remove `debug: { short_logs: true }` from test instances: Seneca 4
+  ignores it and warns with `SENECA_DEP_SHORT_LOGS`.
 
 ## Other Seneca 4 changes
 
 Seneca's own guide,
 [Migrate from Seneca 3](https://github.com/senecajs/seneca/blob/master/docs/how-to/migrate-from-seneca-3.md),
 covers the changes that are not specific to this plugin: promises built
-in, Gubu validation, the `sys:seneca` builtin actions, Node.js 22 or
+in, option validation, the `sys:seneca` builtin actions, Node.js 24 or
 later.

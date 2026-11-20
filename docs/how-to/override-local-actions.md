@@ -12,7 +12,7 @@ that match a more specific local action such as
 
 ```js
 const client = Seneca({ tag: 'client', log: 'warn' })
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .use(BalanceClient)
 
   // A local action, more specific than the pin.
@@ -55,10 +55,10 @@ service; Cid's message matches the pin directly.
 For a wrapped action, the balance client looks up its targets by the pin
 (the message meta data `client_pattern`) rather than by the more
 specific pattern of the message, so the targets registered for
-`role:greet,cmd:hello` serve the `lang:en` messages too. On Seneca 3
-with the default legacy transport, the plugin uses seneca-transport's
-older client builder, which looks up targets by the message pattern
-only; overridden messages then fail with `no-target`.
+`role:greet,cmd:hello` serve the `lang:en` messages too. Versions 1.x
+of the plugin, on Seneca 3 with the default legacy transport, use
+seneca-transport's older client builder, which looks up targets by the
+message pattern only; overridden messages then fail with `no-target`.
 
 ## When to use it
 

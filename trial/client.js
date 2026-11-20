@@ -10,7 +10,7 @@ function ab(msg, reply) {
 }
 
 Seneca()
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .use(require('..')) // in your project: .use('@seneca/balance-client')
   .add('a:1,b:1', ab)
   .add('a:1,b:2', ab)

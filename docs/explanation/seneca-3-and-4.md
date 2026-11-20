@@ -1,8 +1,8 @@
 # Seneca 3 and Seneca 4
 
-The plugin runs on Seneca 3 and on Seneca 4 (tested with 3.38,
-4.0.0-rc5 and the unreleased 4.0.0). This page explains what differs
-between the versions and why. The steps to move an application are in
+From version 2.0.0 the plugin runs on Seneca 4 only (tested with
+seneca 4.0.0). Seneca 3 users stay on `seneca-balance-client@1`. This
+page explains what differs between the versions and why. The steps to move an application are in
 [Migrate from Seneca 3](../how-to/migrate-from-seneca-3.md).
 
 ## The network transport moved out of core
@@ -11,8 +11,9 @@ Seneca 3 bundled seneca-transport and loaded it by default (the options
 `legacy.transport` and `default_plugins.transport`, both true), so
 `seneca.client({ port })` worked without further setup. Seneca 4 core
 has no network code: every process that listens, or has web or tcp
-targets, must load seneca-transport or another transport plugin. The
-balance client itself needs no transport, but its targets do.
+targets, must load `@seneca/transport` (the Seneca 4 version of
+seneca-transport) or another transport plugin. The balance client
+itself needs no transport, but its targets do.
 
 The option `legacy: { transport: false }`, which old tests and examples
 used to select the newer transport protocol on Seneca 3, is rejected by
@@ -22,11 +23,10 @@ Seneca 4's option validation.
 
 seneca-transport replaces the `transport/utils` export of Seneca core
 with its own utilities, which include `make_client`, a client builder
-from the Seneca 2 era. On Seneca 3 the plugin uses `make_client` when it
-is present, as it always did: there it is present whenever
-seneca-transport was loaded before the plugin, which is the default. On
-Seneca 4 the plugin always uses the core transport protocol, whichever
-plugin was loaded first.
+from the Seneca 2 era. On Seneca 3, versions 1.x of the plugin use
+`make_client` when it is present, which is whenever seneca-transport was
+loaded before the plugin, the default. From 2.0.0 the plugin always uses
+the core transport protocol, whichever plugin was loaded first.
 
 The difference shows with `override`. The core protocol tells the
 balance client the pin a wrapped local action belongs to
@@ -37,21 +37,18 @@ targets, and the message fails with `no-target`.
 ## Closing
 
 Seneca 3 closes an instance through `role:seneca,cmd:close`, Seneca 4
-through `sys:seneca,cmd:close`. The plugin adds its close step to the
-pattern of the version it runs on, and uses it to drop the instance's
-target map.
+through `sys:seneca,cmd:close`. The plugin adds its close step to
+`sys:seneca,cmd:close` and uses it to drop the instance's target map.
+`@seneca/transport` 9 registers its own close steps on the same pattern,
+so `close()` releases the listeners and the connections, and the close
+message stays local, also in an instance with a catch-all client.
 
-Two issues come from seneca-transport 8.3, which registers its own close
-hooks on the Seneca 3 pattern only:
-
-* seneca 4.0.0-rc5 does not run that pattern during `close()`, so
-  services keep listening after `close()`;
-* seneca 4.0.0 runs it, and in an instance with a catch-all client the
-  hook chain ends in that client, which sends the close message to a
-  remote service.
-
-[Shut down cleanly](../how-to/shut-down-cleanly.md) shows how to deal
-with both.
+seneca-transport 8.3 registered its close hooks on the Seneca 3 pattern
+only. With the Seneca 4 release candidates that left services listening
+after `close()`, and with some pre-release builds a catch-all client
+forwarded the close message to a remote service. Neither happens with
+seneca 4.0.0 and `@seneca/transport` 9. See
+[Shut down cleanly](../how-to/shut-down-cleanly.md).
 
 ## Option validation
 
