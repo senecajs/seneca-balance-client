@@ -17,7 +17,7 @@ describe('#balance-client', function() {
 
     s0 = Seneca({ tag: 's0' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .add('a:1', function a1(msg, reply) {
         reply({ x: 'a' })
       })
@@ -34,7 +34,7 @@ describe('#balance-client', function() {
 
     c0 = Seneca({ tag: 'c0' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 44470, pin: 'a:1' })
@@ -47,7 +47,7 @@ describe('#balance-client', function() {
 
     s1 = Seneca({ tag: 's1' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(47000)
       .add('a:1', function a1(msg, reply) {
         reply({ a: 1 })
@@ -55,7 +55,7 @@ describe('#balance-client', function() {
 
     s2 = Seneca({ tag: 's2' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(47001)
       .add('a:1,b:1', function a1b1(msg, reply) {
         reply({ a: 1, b: 1 })
@@ -63,7 +63,7 @@ describe('#balance-client', function() {
 
     c1 = Seneca({ tag: 'c1' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 47000, pin: 'a:1' })
@@ -128,7 +128,7 @@ describe('#balance-client', function() {
 
     s0 = Seneca({ tag: 's0' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .add('a:1', function(msg, reply) {
         reply({ x: 1 + msg.x })
       })
@@ -139,7 +139,7 @@ describe('#balance-client', function() {
 
     c0 = Seneca({ tag: 'c0' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:*', model: 'consume' })
       .client({ port: 44460, pin: 'a:*' })
@@ -167,7 +167,7 @@ describe('#balance-client', function() {
 
     s0 = Seneca({ id$: 's0' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .add('a:1', function a1(msg, reply) {
         reply({ x: 1 + msg.x })
       })
@@ -179,7 +179,7 @@ describe('#balance-client', function() {
 
     s1 = Seneca({ id$: 's1' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .add('a:2', function a2s1(msg, reply) {
         tmp.s1++
         reply()
@@ -188,7 +188,7 @@ describe('#balance-client', function() {
 
     c0 = Seneca({ id$: 'c0' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1', model: 'consume' })
       .client({ port: 44570, pin: 'a:1' })
@@ -220,7 +220,7 @@ describe('#balance-client', function() {
   it('happy', function(fin) {
     var s0 = Seneca({ tag: 's0' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44440)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
@@ -228,7 +228,7 @@ describe('#balance-client', function() {
 
     var s1 = Seneca({ tag: 's1' })
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44441)
       .add('a:1', function(msg, reply) {
         reply({ x: 1 })
@@ -236,7 +236,7 @@ describe('#balance-client', function() {
 
     var c0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 44440, pin: 'a:1' })
@@ -264,7 +264,7 @@ describe('#balance-client', function() {
     function make_server(tag, port, fin) {
       return Seneca({ id$: tag })
         .test(fin)
-        .use('seneca-transport')
+        .use('@seneca/transport')
         .listen({
           port: function() {
             return port
@@ -282,7 +282,7 @@ describe('#balance-client', function() {
       s1.ready.bind(s1, function() {
         var c0 = Seneca({ id$: 'c0' })
           .test(fin)
-          .use('seneca-transport')
+          .use('@seneca/transport')
           .use(BalanceClient, {
             debug: { client_updates: true }
           })
@@ -323,7 +323,7 @@ describe('#balance-client', function() {
   it('add-remove', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44480)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
@@ -331,7 +331,7 @@ describe('#balance-client', function() {
 
     var s1 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44481)
       .add('a:1', function(msg, reply) {
         reply({ x: 1 })
@@ -339,7 +339,7 @@ describe('#balance-client', function() {
 
     var c0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
 
@@ -391,7 +391,7 @@ describe('#balance-client', function() {
   it("doesn't remove when no match is found", function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44490)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
@@ -399,7 +399,7 @@ describe('#balance-client', function() {
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .use('seneca-transport')
+          .use('@seneca/transport')
           .listen(44491)
           .add('a:1', function(msg, reply) {
             reply({ x: 1 })
@@ -407,7 +407,7 @@ describe('#balance-client', function() {
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
-              .use('seneca-transport')
+              .use('@seneca/transport')
               .use(BalanceClient)
               .client({ type: 'balance', pin: 'a:1' })
               .act(
@@ -456,7 +456,7 @@ describe('#balance-client', function() {
   it('uses a custom id when adding and removing clients', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44500)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
@@ -464,7 +464,7 @@ describe('#balance-client', function() {
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .use('seneca-transport')
+          .use('@seneca/transport')
           .listen(44501)
           .add('a:1', function(msg, reply) {
             reply({ x: 1 })
@@ -472,7 +472,7 @@ describe('#balance-client', function() {
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
-              .use('seneca-transport')
+              .use('@seneca/transport')
               .use(BalanceClient)
               .client({ type: 'balance', pin: 'a:1' })
               .act(
@@ -532,7 +532,7 @@ describe('#balance-client', function() {
 
   it('no-current-target-error', function(fin) {
     var c0 = Seneca({ log: 'silent' })
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ pin: 'a:1', port: 55555 })
@@ -555,7 +555,7 @@ describe('#balance-client', function() {
   it('supports model option', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44510)
       .add('a:1', function(msg, reply) {
         reply({ x: 0 })
@@ -563,7 +563,7 @@ describe('#balance-client', function() {
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .use('seneca-transport')
+          .use('@seneca/transport')
           .listen(44511)
           .add('a:1', function(msg, reply) {
             reply({ x: 1 })
@@ -571,7 +571,7 @@ describe('#balance-client', function() {
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
-              .use('seneca-transport')
+              .use('@seneca/transport')
               .use(BalanceClient, { model: 'consume' })
               .client({ type: 'balance', pin: 'a:1' })
               .client({ port: 44510, pin: 'a:1' })
@@ -601,7 +601,7 @@ describe('#balance-client', function() {
 
     s0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44520)
       .add('a:1', function(m, d) {
         t.x = 1
@@ -611,7 +611,7 @@ describe('#balance-client', function() {
 
     s1 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44521)
       .add('a:1', function(m, d) {
         t.y = 1
@@ -619,9 +619,9 @@ describe('#balance-client', function() {
         check()
       })
 
-    c0 = Seneca({ tag: 'c0', log: 'silent', debug: { short_logs: true } })
+    c0 = Seneca({ tag: 'c0', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1', model: 'observe' })
       .client({ port: 44520, pin: 'a:1' })
@@ -645,7 +645,7 @@ describe('#balance-client', function() {
   it('multiple-client-calls', function(fin) {
     var s0 = Seneca()
       .test(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44530)
       .listen(44540)
       .add('a:1', function(msg, reply) {
@@ -657,7 +657,7 @@ describe('#balance-client', function() {
       .ready(function() {
         var s1 = Seneca()
           .test(fin)
-          .use('seneca-transport')
+          .use('@seneca/transport')
           .listen(44531)
           .listen(44541)
           .add('a:1', function(msg, reply) {
@@ -669,7 +669,7 @@ describe('#balance-client', function() {
           .ready(function() {
             var c0 = Seneca()
               .test(fin)
-              .use('seneca-transport')
+              .use('@seneca/transport')
               .use(BalanceClient)
               .client({ type: 'balance', pin: 'a:1' })
               .client({ port: 44530, pin: 'a:1' })
@@ -710,27 +710,27 @@ describe('#balance-client', function() {
     var t = {}
     var s0, s1, c0
 
-    s0 = Seneca({ tag: 's0', log: 'silent', debug: { short_logs: true } })
+    s0 = Seneca({ tag: 's0', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44550)
       .add('a:1', function(m, d) {
         t.x = 1
         d()
       })
 
-    s1 = Seneca({ tag: 's1', log: 'silent', debug: { short_logs: true } })
+    s1 = Seneca({ tag: 's1', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44551)
       .add('a:1', function(m, d) {
         t.y = 1
         d()
       })
 
-    c0 = Seneca({ tag: 'c0', log: 'silent', debug: { short_logs: true } })
+    c0 = Seneca({ tag: 'c0', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1', model: 'observe' })
       .client({ port: 44550, pin: 'a:1' })
@@ -757,43 +757,43 @@ describe('#balance-client', function() {
     var t = { x: 0, y: 0 }
     var s0, s1, c0, c1, c2
 
-    s0 = Seneca({ tag: 's0', log: 'silent', debug: { short_logs: true } })
+    s0 = Seneca({ tag: 's0', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44560)
       .add('a:1', function(m, d) {
         t.x++
         d(null, { x: t.x })
       })
 
-    s1 = Seneca({ tag: 's1', log: 'silent', debug: { short_logs: true } })
+    s1 = Seneca({ tag: 's1', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .listen(44561)
       .add('a:1', function(m, d) {
         t.y++
         d(null, { y: t.y })
       })
 
-    c0 = Seneca({ tag: 'c0', log: 'silent', debug: { short_logs: true } })
+    c0 = Seneca({ tag: 'c0', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 44560, pin: 'a:1' })
       .client({ port: 44561, pin: 'a:1' })
 
-    c1 = Seneca({ tag: 'c1', log: 'silent', debug: { short_logs: true } })
+    c1 = Seneca({ tag: 'c1', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 44560, pin: 'a:1' })
       .client({ port: 44561, pin: 'a:1' })
 
-    c2 = Seneca({ tag: 'c2', log: 'silent', debug: { short_logs: true } })
+    c2 = Seneca({ tag: 'c2', log: 'silent' })
       .error(fin)
-      .use('seneca-transport')
+      .use('@seneca/transport')
       .use(BalanceClient)
       .client({ type: 'balance', pin: 'a:1' })
       .client({ port: 44560, pin: 'a:1' })
