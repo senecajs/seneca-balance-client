@@ -23,7 +23,7 @@ process version of the Quick Example is in [../examples](../examples/).
 | [Use custom ids](how-to/use-custom-ids.md) | Naming targets and removing them by id. |
 | [Combine with pins](how-to/combine-with-pins.md) | One balance client per pin, `pins` arrays, globs, catch-all clients. |
 | [Override local actions](how-to/override-local-actions.md) | Balancing messages that also have a local implementation. |
-| [Shut down cleanly](how-to/shut-down-cleanly.md) | Closing, removing targets, known issues of the Seneca 4 prerelease. |
+| [Shut down cleanly](how-to/shut-down-cleanly.md) | Closing, removing targets, services. |
 | [Migrate from Seneca 3](how-to/migrate-from-seneca-3.md) | Transport plugin, options, package name, tests. |
 
 ## Reference
@@ -40,7 +40,7 @@ process version of the Quick Example is in [../examples](../examples/).
 | Explanation | Topic |
 | ----------- | ----- |
 | [How the balance client works](explanation/how-it-works.md) | A transport client of other clients, the meaning of the models, seneca-mesh, limits. |
-| [Seneca 3 and Seneca 4](explanation/seneca-3-and-4.md) | Transport, client building, closing and option validation on each version. |
+| [Seneca 3 and Seneca 4](explanation/seneca-3-and-4.md) | Transport, client building, closing and option validation: what changed from Seneca 3. |
 
 ## Feature index
 
@@ -61,7 +61,7 @@ flags.
 | `role:transport,type:balance,add:client` | action | [Actions](reference/messages.md#roletransporttypebalanceaddclient) | [Add and remove targets](how-to/add-and-remove-targets.md) |
 | `role:transport,type:balance,remove:client` | action | [Actions](reference/messages.md#roletransporttypebalanceremoveclient) | [Add and remove targets](how-to/add-and-remove-targets.md), [Use custom ids](how-to/use-custom-ids.md) |
 | `role:transport,type:balance,get:target-map` | action | [Actions](reference/messages.md#roletransporttypebalancegettarget-map) | [Add and remove targets](how-to/add-and-remove-targets.md) |
-| `sys:seneca,cmd:close` (Seneca 4), `role:seneca,cmd:close` (Seneca 3) | close step (prior) | [Actions](reference/messages.md#close-hook) | [Shut down cleanly](how-to/shut-down-cleanly.md) |
+| `sys:seneca,cmd:close` | close step (prior) | [Actions](reference/messages.md#close-hook) | [Shut down cleanly](how-to/shut-down-cleanly.md) |
 | `consume`, alias `actor` | model | [Models](reference/models.md#consume) | [Choose a balancing model](how-to/choose-a-balancing-model.md) |
 | `observe`, alias `publish` | model | [Models](reference/models.md#observe) | [Choose a balancing model](how-to/choose-a-balancing-model.md) |
 | Model functions `(seneca, msg, targetstate, done, meta)` | model | [Models](reference/models.md#model-functions) | [Choose a balancing model](how-to/choose-a-balancing-model.md) |

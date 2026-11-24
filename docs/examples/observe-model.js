@@ -8,7 +8,7 @@ const handled = { 8261: [], 8262: [] }
 
 function greetService(port) {
   return Seneca({ tag: 'greet-' + port, log: 'warn' })
-    .use('seneca-transport')
+    .use('@seneca/transport')
     .add(pin, function (msg, reply) {
       handled[port].push(msg.name)
       reply({ hello: msg.name, port: port })
@@ -20,9 +20,9 @@ async function main() {
   const services = [greetService(8261), greetService(8262)]
 
   const client = Seneca({ tag: 'client', log: 'warn' })
-    // seneca-transport warns about the replies after the first one
+    // @seneca/transport warns about the replies after the first one
     // (unknown_message_id); this option turns the warning off.
-    .use('seneca-transport', { warn: { unknown_message_id: false } })
+    .use('@seneca/transport', { warn: { unknown_message_id: false } })
     .use(BalanceClient)
 
     // observe: every message goes to every target; the first reply is used.
@@ -41,21 +41,12 @@ async function main() {
     console.log('handled:', handled)
   } finally {
     await client.close()
-    for (const service of services) await stop(service)
+    for (const service of services) await service.close()
   }
 }
 
 function ready(instance) {
   return new Promise((resolve) => instance.ready(resolve))
-}
-
-// seneca-transport 8.3 closes its listener in a role:seneca,cmd:close hook.
-// Seneca 4.0.0 runs that hook in close(); 4.0.0-rc5 does not, so run it here.
-async function stop(service) {
-  if (service.version.startsWith('4.0.0-rc')) {
-    await service.post('role:seneca,cmd:close')
-  }
-  await service.close()
 }
 
 main().catch((err) => {

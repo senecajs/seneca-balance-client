@@ -3,7 +3,7 @@
 
 # @seneca/balance-client
 
-[![npm version](https://img.shields.io/npm/v/seneca-balance-client.svg)](https://npmjs.com/package/seneca-balance-client)
+[![npm version](https://img.shields.io/npm/v/@seneca/balance-client.svg)](https://npmjs.com/package/@seneca/balance-client)
 [![build](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml/badge.svg)](https://github.com/senecajs/seneca-balance-client/actions/workflows/build.yml)
 [![Known Vulnerabilities](https://snyk.io/test/github/senecajs/seneca-balance-client/badge.svg)](https://snyk.io/test/github/senecajs/seneca-balance-client)
 
@@ -14,34 +14,28 @@ A Seneca transport plugin for client side load balancing. A balance
 client sits in front of several ordinary transport clients that share
 its pin and spreads the matching messages over them, round-robin, to
 all of them, or with your own model function; targets can be added and
-removed while the client runs. It works with Seneca 3 and Seneca 4
-(tested with 3.38, 4.0.0-rc5 and the unreleased 4.0.0) on Node.js 18 or
-later, and is the balancer that seneca-mesh uses.
+removed while the client runs. It works with Seneca 4 (tested with
+seneca 4.0.0) on Node.js 24 or later, and is the balancer that
+seneca-mesh uses.
 
 ## Install
 
 ```sh
-npm install --legacy-peer-deps seneca@^4.0.0-rc5 seneca-transport @seneca/balance-client
+npm install seneca@^4 @seneca/transport @seneca/balance-client
 ```
 
 Seneca 4 has no built in network transport, so the targets need
-seneca-transport (or another transport plugin). `--legacy-peer-deps` is
-needed while Seneca 4 is a prerelease: seneca-transport 8.3 declares the
-peer dependency `seneca >=3`, which excludes `4.0.0-rc5`. Seneca 3
-bundles seneca-transport:
+`@seneca/transport` (or another transport plugin).
 
-```sh
-npm install seneca @seneca/balance-client
-```
-
-Versions up to 1.2.0 were published as `seneca-balance-client`; from the
-next version the package is `@seneca/balance-client`.
+Versions up to 1.2.0 were published as `seneca-balance-client`; from
+2.0.0 the package is `@seneca/balance-client`, and it needs Seneca 4.
+On Seneca 3, keep `seneca-balance-client@1`.
 
 ```js
 const Seneca = require('seneca')
 
 const seneca = Seneca()
-  .use('seneca-transport') // Seneca 4
+  .use('@seneca/transport')
   .use('@seneca/balance-client', { model: 'consume' })
 ```
 
@@ -56,13 +50,13 @@ are in [examples/](examples/).
 // Run twice, on two ports, in two terminals:
 // $ node examples/server.js 47000
 // $ node examples/server.js 47001
-// Seneca 4 does not bundle a network transport, so load seneca-transport.
+// Seneca 4 does not bundle a network transport, so load @seneca/transport.
 // Stop with Ctrl-C.
 
 var port = parseInt(process.argv[2], 10)
 
 require('seneca')({ log: 'warn' })
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .add('a:1', function (msg, done) {
     done(null, { a: 1, x: msg.x, port: port })
   })
@@ -80,7 +74,7 @@ require('seneca')({ log: 'warn' })
 // The four messages are shared between the two servers, round-robin.
 
 require('seneca')({ log: 'warn' })
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .use(require('..')) // in your project: .use('@seneca/balance-client')
 
   .client({ type: 'balance', pin: 'a:1' })
@@ -105,7 +99,7 @@ require('seneca')({ log: 'warn' })
 Run `node examples/server.js 47000` and `node examples/server.js 47001`
 in two terminals (each prints `listening on port ...`), then
 `node examples/client.js` in a third. Output (Node.js 24, seneca
-4.0.0-rc5):
+4.0.0):
 
 ```
 { a: 1, x: 1, port: 47001 }
@@ -205,28 +199,24 @@ participation. If you feel you can help in any way, be it with
 documentation, examples, extra testing, or new features, please get in
 touch.
 
-Run the tests on Node.js 24 (the default target) or 22:
+Run the tests on Node.js 24 or later:
 
 ```sh
-npm install   # .npmrc sets legacy-peer-deps while seneca 4 is a prerelease
+npm install
 npm test      # node:test
 ```
 
-The devDependency is the Seneca 4 prerelease, `seneca@^4.0.0-rc5`. To
-test another version of Seneca, install it without saving, run the
-tests, then restore the locked versions:
+To test another Seneca 4 build, install it without saving, run the
+tests, then reinstall:
 
 ```sh
-npm install --no-save seneca@3.38.0   # or the path of a seneca package tarball
+npm install --no-save /path/to/seneca-4.x.y.tgz
 npm test
 npm install
 ```
 
-`npm test` runs `node --test --test-force-exit` because seneca 4.0.0-rc5
-leaves seneca-transport listeners open after `close()` (see
-[Shut down cleanly](docs/how-to/shut-down-cleanly.md#services-on-seneca-400-rc5));
-every test closes its instances. `npm run coverage` reports test
-coverage.
+Every test closes its instances, so `npm test` exits by itself.
+`npm run coverage` reports test coverage.
 
 The CI workflow update is provided as a patch in [.patches](.patches/),
 because the branch that introduced it could not change workflow files;
@@ -237,12 +227,12 @@ because the branch that introduced it could not change workflow files;
 The balance client was written by Richard Rodger and contributors as
 part of the [Senecajs org](https://github.com/senecajs/), to balance
 messages on the client side, and it became the balancer of seneca-mesh.
-Versions up to 1.2.0 were published as `seneca-balance-client`; from the
-next version the package is `@seneca/balance-client`.
+Versions up to 1.2.0 were published as `seneca-balance-client`; from
+2.0.0 the package is `@seneca/balance-client`.
 
 | Version | Package | Seneca | Node.js |
 | ------- | ------- | ------ | ------- |
-| 1.3.0 | `@seneca/balance-client` | 3.x (tested with 3.38), 4.0.0-rc5, 4.0.0 | 18 or later (tested with 24 and 22) |
+| 2.0.0 | `@seneca/balance-client` | 4.x | 24 or later |
 | 1.2.0 and earlier | `seneca-balance-client` | 3.x | 8 or later |
 
 Changes are listed in [CHANGES.md](CHANGES.md).

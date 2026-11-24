@@ -69,8 +69,6 @@ balance_client.preload = function(plugin) {
 
 function balance_client(options) {
   var seneca = this
-  var tu = seneca.export('transport/utils') || {}
-  var legacy_transport = seneca.version.startsWith('3.')
   var modelMap = {
     observe: observeModel,
     consume: consumeModel,
@@ -119,13 +117,8 @@ function balance_client(options) {
     get_client_map
   )
 
-  // Seneca 3 closes via role:seneca,cmd:close; Seneca 4 via sys:seneca,cmd:close.
   // Release the target map of this instance, then continue the close chain.
-  var close_pattern = legacy_transport
-    ? 'role:seneca,cmd:close'
-    : 'sys:seneca,cmd:close'
-
-  seneca.add(close_pattern, function(close_msg, done) {
+  seneca.add('sys:seneca,cmd:close', function(close_msg, done) {
     delete global_target_map[seneca.id]
     delete global_options_map[seneca.id]
     this.prior(close_msg, done)
@@ -212,49 +205,22 @@ function balance_client(options) {
     model =
       'function' === typeof model ? model : modelMap[model] || consumeModel
 
-    // Seneca 3 with the legacy transport (the default in 3.x) provides
-    // make_client; Seneca 4 always uses the core transport protocol below,
-    // whichever utils object seneca-transport exported.
-    if (legacy_transport && tu.make_client) {
-      var make_send = function(spec, topic, send_done) {
-        seneca.log.debug(
-          'client',
-          'send',
-          topic + '_res',
-          client_options,
-          seneca
-        )
+    // The client uses the core transport protocol: Seneca calls send_msg
+    // with the message, the reply callback and the message meta data.
+    var send_msg = function(msg, reply, meta) {
+      var patkey = meta.client_pattern || meta.pattern
+      var targetstate = target_map[patkey]
 
-        send_done(null, function(msg, done, meta) {
-          var patkey = (meta || msg.meta$).pattern
-          var targetstate = target_map[patkey]
-
-          if (targetstate) {
-            model(this, msg, targetstate, done, meta)
-            return
-          } else return done(seneca.error('no-target', { msg: msg }))
-        })
-      }
-
-      tu.make_client(make_send, client_options, clientdone)
-    } else {
-      var send_msg = function(msg, reply, meta) {
-        var msg_meta = meta || msg.meta$
-
-        var patkey = msg_meta.client_pattern || msg_meta.pattern
-        var targetstate = target_map[patkey]
-
-        if (targetstate) {
-          model(this, msg, targetstate, reply, meta)
-          return
-        } else return reply(seneca.error('no-target', { msg: msg }))
-      }
-
-      return clientdone({
-        config: msg,
-        send: send_msg
-      })
+      if (targetstate) {
+        model(this, msg, targetstate, reply, meta)
+        return
+      } else return reply(seneca.error('no-target', { msg: msg }))
     }
+
+    return clientdone({
+      config: msg,
+      send: send_msg
+    })
   }
 
   function observeModel(seneca, msg, targetstate, done, meta) {

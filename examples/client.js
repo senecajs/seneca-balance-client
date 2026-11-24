@@ -3,7 +3,7 @@
 // The four messages are shared between the two servers, round-robin.
 
 require('seneca')({ log: 'warn' })
-  .use('seneca-transport')
+  .use('@seneca/transport')
   .use(require('..')) // in your project: .use('@seneca/balance-client')
 
   .client({ type: 'balance', pin: 'a:1' })

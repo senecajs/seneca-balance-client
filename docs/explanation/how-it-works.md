@@ -11,7 +11,7 @@ In Seneca, `seneca.client({ pin })` does not open a connection by
 itself. It adds an action for the pin whose implementation hands the
 message to a transport client object, which Seneca obtains by sending
 `role:transport,hook:client,type:<type>` to the plugin that implements
-that type. seneca-transport implements `web` and `tcp`; this plugin
+that type. `@seneca/transport` implements `web` and `tcp`; this plugin
 implements `balance`.
 
 Because a client is an action, the usual pattern rules apply: a message

@@ -23,7 +23,7 @@ its own list and position.
 
 The reply, or the error, of the chosen target is passed to the caller
 unchanged. A target that fails (for example with `ECONNREFUSED` from
-seneca-transport when its service is down) is not retried and not
+`@seneca/transport` when its service is down) is not retried and not
 removed: the caller gets the error, and the next message goes to the
 next target. Use `remove:client` when a service goes away, or a model
 function that fails over.
@@ -37,7 +37,7 @@ The message is sent to every target in the list, in order and without
 waiting. The first reply to arrive, a result or an error, is passed to
 the caller; later replies are dropped.
 
-seneca-transport logs each dropped reply as an `unknown_message_id`
+`@seneca/transport` logs each dropped reply as an `unknown_message_id`
 warning, because the message has already been answered. Its option
 `warn: { unknown_message_id: false }` turns the warning off.
 

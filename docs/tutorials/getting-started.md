@@ -6,25 +6,21 @@ are shared between the copies. The finished program is
 [docs/examples/getting-started.js](../examples/getting-started.js).
 
 You should know how to define an action with `seneca.add` and send a
-message with `seneca.post`. The tutorial uses the Seneca 4 prerelease
-(`seneca@^4.0.0-rc5`).
+message with `seneca.post`. The tutorial uses Seneca 4 (`seneca@^4`)
+on Node.js 24 or later.
 
 ## 1. Install
 
 ```sh
 mkdir greet && cd greet
 npm init -y
-npm install --legacy-peer-deps seneca@^4.0.0-rc5 seneca-transport @seneca/balance-client
+npm install seneca@^4 @seneca/transport @seneca/balance-client
 ```
 
 * `seneca` is the framework. Seneca 4 core has no network code.
-* `seneca-transport` provides the HTTP (`web`) and TCP transports.
+* `@seneca/transport` provides the HTTP (`web`) and TCP transports.
 * `@seneca/balance-client` is this plugin (see
   [Install](../../README.md#install) about the package name).
-
-`--legacy-peer-deps` is needed while Seneca 4 is a prerelease:
-seneca-transport 8.3 declares the peer dependency `seneca >=3`, which npm
-does not consider satisfied by `4.0.0-rc5`.
 
 ## 2. Write the program
 
@@ -38,7 +34,7 @@ const BalanceClient = require('@seneca/balance-client')
 // here two copies run in this process so that the example is self-contained.
 function greetService(port) {
   return Seneca({ tag: 'greet-' + port, log: 'warn' })
-    .use('seneca-transport')
+    .use('@seneca/transport')
     .add('role:greet,cmd:hello', function (msg, reply) {
       reply({ hello: msg.name, port: port })
     })
@@ -49,7 +45,7 @@ async function main() {
   const services = [greetService(8261), greetService(8262)]
 
   const client = Seneca({ tag: 'client', log: 'warn' })
-    .use('seneca-transport')
+    .use('@seneca/transport')
     .use(BalanceClient)
 
     // The balance client handles the pin; it has no address of its own.
@@ -67,21 +63,12 @@ async function main() {
     }
   } finally {
     await client.close()
-    for (const service of services) await stop(service)
+    for (const service of services) await service.close()
   }
 }
 
 function ready(instance) {
   return new Promise((resolve) => instance.ready(resolve))
-}
-
-// seneca-transport 8.3 closes its listener in a role:seneca,cmd:close hook.
-// Seneca 4.0.0 runs that hook in close(); 4.0.0-rc5 does not, so run it here.
-async function stop(service) {
-  if (service.version.startsWith('4.0.0-rc')) {
-    await service.post('role:seneca,cmd:close')
-  }
-  await service.close()
 }
 
 main().catch((err) => {
@@ -100,7 +87,7 @@ program, except that it loads the plugin from the repository with
 node greet.js
 ```
 
-Output (Node.js 24, seneca 4.0.0-rc5):
+Output (Node.js 24, seneca 4.0.0):
 
 ```
 { hello: 'Ann', port: 8261 }
@@ -128,10 +115,8 @@ exits.
 * Each `role:greet,cmd:hello` message matched the pin and reached the
   balance client, which used its default model, `consume`: each message
   goes to one target, round-robin, in the order the targets were added.
-* At the end the client was closed first, then the services. The
-  `stop` helper works around a seneca 4.0.0-rc5 issue: rc5 does not run
-  the close hook seneca-transport 8.3 uses to release its listener, so
-  a service would keep the process alive. See
+* At the end the client was closed first, then the services. Closing a
+  service also closes its listener, so the process exits. See
   [Shut down cleanly](../how-to/shut-down-cleanly.md).
 
 The pin `role:greet,cmd:hello` is a pattern; any message that matches

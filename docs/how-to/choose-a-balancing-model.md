@@ -51,7 +51,7 @@ services record the names they receive:
 
 ```js
 const client = Seneca({ tag: 'client', log: 'warn' })
-  .use('seneca-transport', { warn: { unknown_message_id: false } })
+  .use('@seneca/transport', { warn: { unknown_message_id: false } })
   .use(BalanceClient)
   .client({ type: 'balance', pin, model: 'observe' })
   .client({ type: 'web', port: 8261, pin })
@@ -67,10 +67,10 @@ handled: { '8261': [ 'Ann', 'Bob' ], '8262': [ 'Ann', 'Bob' ] }
 ```
 
 Both services handled both messages; the caller got the first reply
-each time. The replies after the first are dropped, and seneca-transport
-logs each of them as an `unknown_message_id` warning; the
-`warn: { unknown_message_id: false }` option of seneca-transport turns
-those warnings off.
+each time. The replies after the first are dropped, and
+`@seneca/transport` logs each of them as an `unknown_message_id`
+warning; the `warn: { unknown_message_id: false }` option of
+`@seneca/transport` turns those warnings off.
 
 Use `observe` for notifications, cache invalidation and other messages
 where every service must act and the reply does not matter much.
